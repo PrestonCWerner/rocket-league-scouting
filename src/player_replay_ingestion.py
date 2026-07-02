@@ -34,7 +34,7 @@ def initiate_logger() -> None:
     console_handler.setFormatter(console_formatter)
 
     # Create file handler
-    file_handler = logging.FileHandler("./.logs/player_analysis.log", mode="a")
+    file_handler = logging.FileHandler("./.logs/player_replay_ingestion.log", mode="a")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
 
@@ -143,29 +143,36 @@ if __name__ == "__main__":
 
     # Get the player to analyze and number of games to analyze
     # Validate that name and count are of correct types
-    name_flagged: bool = True
-    count_flagged: bool = True
     player_name: str = ""
     game_count: int = 0
+    player_name_flag: bool = True
+    game_count_flag: bool = True
 
-    while (name_flagged or count_flagged):
-        if name_flagged:
-            player_name = input("Enter the player's name: ")
-        
-        if count_flagged:
-            game_count = input("Enter number of games to analyze: ")
+    name_validation_list = [" ", "/", "\\", "<", ">", "\"", "\'"]
 
-        name_flagged = False
-        count_flagged = False
-
-        if (not isinstance(player_name, str)):
-            print(f"{player_name} is not a valid input. Input was of type {type(player_name)}, where type str was expected.")
-            name_flagged = True
+    while player_name_flag or game_count_flag:
         try:
-            game_count = int(game_count)
-        except ValueError:
-           print(f"{game_count} is not a valid input. Input was of type {type(game_count)}, where type int was expected.")
-           count_flagged = True
+            if player_name_flag:
+                player_name = str(input("Please enter player name: "))
+                
+                for char in player_name:
+                    if char in name_validation_list:
+                        raise ValueError(f"Character {char} not accepted in player name.")
+                if len(player_name) < 2 or len(player_name) > 32:
+                    raise ValueError(f"Player name must be between 2 characters and 32 characters long.")
+
+                player_name_flag = False
+            
+            if game_count_flag:
+                game_count = int(input("Please enter game count for analysis: "))
+
+                if game_count >= 50 or game_count < 1:
+                    raise ValueError(f"Game count must be between 1 and 50 games.")
+
+                game_count_flag = False
+        
+        except ValueError as e:
+            logger.error(e)
     
     raw_frame = get_raw_data(player_name, game_count)
 
