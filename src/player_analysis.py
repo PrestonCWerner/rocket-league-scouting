@@ -3,12 +3,46 @@ import os
 import pandas as pd
 import streamlit as st
 import requests
+import logging
 from dotenv import load_dotenv
 
+# Environment variable assignment for API Key and URL
 load_dotenv()
 API_AUTH_KEY = os.getenv("API_AUTHORIZATION_KEY")
 AUTH_HEADER = {"Authorization": API_AUTH_KEY}
 BASE_URL = os.getenv("BASE_URL")
+
+# Initiate global Logger
+logger = logging.getLogger("player_analysis.py")
+logger.setLevel(logging.DEBUG)
+
+def initiate_logger() -> None:
+    # Clear logger handlers, if any exist
+    logger.handlers.clear()
+    
+    # Define log message format
+    console_formatter = logging.Formatter('%(levelname)s: on line %(lineno)d: %(message)s')
+    file_formatter = logging.Formatter(
+        fmt="%(levelname)s: at %(asctime)s on line %(lineno)d in %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO) 
+    console_handler.setFormatter(console_formatter)
+
+    # Create file handler
+    file_handler = logging.FileHandler("./logs/player_analysis.log", mode="a")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(file_formatter)
+
+    # Connect handlers to logger
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    logger.info("Logger initiated successfully.")
+   
 
 def verify_raw_source_data(raw_source: pd.DataFrame) -> bool:
     print("Hi!")
@@ -58,13 +92,13 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
         replays_overview_data = requests.get(BASE_URL + f"?player-name={player_name}&count={game_count}", headers = AUTH_HEADER)
 
     except requests.exceptions.Timeout as e:
-        print(f"The request timed out: {e}")
+        logger.error(f"API request timed out: {e}")
     except requests.exceptions.ConnectionError as e:
-        print(f"Network problem or connection refused: {e}")
+        logger.error(f"Network problem or connection refused: {e}")
     except requests.exceptions.HTTPError as e:
-        print(f"HTTP error occurred (e.g., 404 or 500): {e}")
+        logger.error(f"HTTP error occurred (e.g., 404 or 500): {e}")
     except requests.exceptions.RequestException as e:
-        print(f"An ambiguous error occurred while handling the request: {e}")
+        logger.error(f"An ambiguous error occurred while handling the request: {e}")
     
     # Get replay list to iterate through.
     replays_list: list = replays_overview_data.json()["list"]
@@ -75,19 +109,21 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
             resultant_frame = pd.concat([resultant_frame, parse_player_match_info(replay_data.json(), player_name)], ignore_index = True)
     
     except requests.exceptions.Timeout as e:
-        print(f"The request timed out: {e}")
+        logger.error(f"API request timed out: {e}")
     except requests.exceptions.ConnectionError as e:
-        print(f"Network problem or connection refused: {e}")
+        logger.error(f"Network problem or connection refused: {e}")
     except requests.exceptions.HTTPError as e:
-        print(f"HTTP error occurred (e.g., 404 or 500): {e}")
+        logger.error(f"HTTP error occurred (e.g., 404 or 500): {e}")
     except requests.exceptions.RequestException as e:
-        print(f"An ambiguous error occurred while handling the request: {e}")
+        logger.error(f"An ambiguous error occurred while handling the request: {e}")
 
     
 
     return resultant_frame
 
 if __name__ == "__main__":
+    initiate_logger()
+
     # Get the player to analyze and number of games to analyze
     # Validate that name and count are of correct types
     name_flagged: bool = True
@@ -116,5 +152,7 @@ if __name__ == "__main__":
     
     raw_frame = get_raw_data(player_name, game_count)
     print(raw_frame.head())
+
+    logging.shutdown()
 
 
