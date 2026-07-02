@@ -1,7 +1,6 @@
 # Import necessary libraries
 import os
 import pandas as pd
-import streamlit as st
 import requests
 import logging
 from datetime import datetime
@@ -14,7 +13,7 @@ AUTH_HEADER = {"Authorization": API_AUTH_KEY}
 BASE_URL = os.getenv("BASE_URL")
 
 # Initiate global Logger
-logger = logging.getLogger("player_analysis.py")
+logger = logging.getLogger("player_replay_ingestion.py")
 logger.setLevel(logging.DEBUG)
 
 def initiate_logger() -> None:
@@ -22,7 +21,7 @@ def initiate_logger() -> None:
     logger.handlers.clear()
     
     # Define log message format
-    console_formatter = logging.Formatter('%(levelname)s: on line %(lineno)d: %(message)s')
+    console_formatter = logging.Formatter('%(levelname)s: ON LINE %(lineno)d - %(message)s')
     file_formatter = logging.Formatter(
         fmt="%(levelname)s: at %(asctime)s on line %(lineno)d in %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
@@ -34,7 +33,7 @@ def initiate_logger() -> None:
     console_handler.setFormatter(console_formatter)
 
     # Create file handler
-    file_handler = logging.FileHandler("./.logs/player_replay_ingestion.log", mode="a")
+    file_handler = logging.FileHandler("./.logs/player_replay_ingestion.log", mode="w")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
 
@@ -95,7 +94,8 @@ def parse_player_match_info(replay_json: dict, player_name: str) -> pd.DataFrame
         "mvp": bool, 
         "shooting_percentage": float
     })
-    
+
+
     return resultant_frame
 
     
@@ -136,6 +136,9 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
     except requests.exceptions.RequestException as e:
         logger.error(f"An ambiguous error occurred while handling the request: {e}")
     
+    logger.info(resultant_frame.columns)
+    resultant_frame.reset_index(inplace=True)
+
     return resultant_frame
 
 if __name__ == "__main__":
@@ -157,7 +160,7 @@ if __name__ == "__main__":
                 
                 for char in player_name:
                     if char in name_validation_list:
-                        raise ValueError(f"Character {char} not accepted in player name.")
+                        raise ValueError(f"Character '{char}' not accepted in player name.")
                 if len(player_name) < 2 or len(player_name) > 32:
                     raise ValueError(f"Player name must be between 2 characters and 32 characters long.")
 
@@ -174,13 +177,14 @@ if __name__ == "__main__":
         except ValueError as e:
             logger.error(e)
     
-    raw_frame = get_raw_data(player_name, game_count)
+    raw_frame: pd.DataFrame = get_raw_data(player_name, game_count)
+    logger.info(raw_frame.columns)
 
     assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
 
     cur_datetime = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     csv_path = f"./player_csvs/Scouting_Report_{player_name}-{cur_datetime}"
-    raw_frame.to_csv(csv_path)
+    raw_frame.to_csv(csv_path, index=False)
 
     logger.info(f"Created csv file at {csv_path}.")
 
