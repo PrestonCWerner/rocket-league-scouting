@@ -1,2 +1,4 @@
 # Ignore environment variables file
 .env
+.logs
+player_csvs/*

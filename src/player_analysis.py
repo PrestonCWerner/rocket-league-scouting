@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 import requests
 import logging
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Environment variable assignment for API Key and URL
@@ -33,7 +34,7 @@ def initiate_logger() -> None:
     console_handler.setFormatter(console_formatter)
 
     # Create file handler
-    file_handler = logging.FileHandler("./logs/player_analysis.log", mode="a")
+    file_handler = logging.FileHandler("./.logs/player_analysis.log", mode="a")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
 
@@ -45,13 +46,18 @@ def initiate_logger() -> None:
    
 
 def verify_raw_source_data(raw_source: pd.DataFrame) -> bool:
-    print("Hi!")
+    #TODO: add assertions and such for data validation
+    assert (raw_source['goals'] <= 10).all(), logger.DEBUG("Expected goals above range")
+
+    return True
+    
 
 def parse_player_match_info(replay_json: dict, player_name: str) -> pd.DataFrame:
     # Parses individual game stats
     # Returns Data Frame with single row representing game stats
     
-    playlist: str = replay_json["playlist_id"]
+    playlist: str = replay_json["match_type"]
+    match_type: str = replay_json["team_size"]
     date = pd.to_datetime(replay_json["date"])
     
     
@@ -72,10 +78,23 @@ def parse_player_match_info(replay_json: dict, player_name: str) -> pd.DataFrame
                 break
     
     stat_dict: dict = replay_json[player_team]["players"][index]["stats"]["core"]
-    base_dict: dict = { "playlist": playlist, "datetime": date, "team": "home" if player_team == "blue" else "away" }
+    base_dict: dict = { "datetime": date, "playlist": playlist, "match_type": match_type, "team": "home" if player_team == "blue" else "away" }
     result_dict: dict = base_dict | stat_dict
 
     resultant_frame = pd.DataFrame([result_dict])
+
+    resultant_frame = resultant_frame.astype({
+        "playlist": str,
+        "match_type": str,
+        "team": str,
+        "shots": int,
+        "shots_against": int,
+        "saves": int,
+        "assists": int,
+        "score": int, 
+        "mvp": bool, 
+        "shooting_percentage": float
+    })
     
     return resultant_frame
 
@@ -116,9 +135,7 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
         logger.error(f"HTTP error occurred (e.g., 404 or 500): {e}")
     except requests.exceptions.RequestException as e:
         logger.error(f"An ambiguous error occurred while handling the request: {e}")
-
     
-
     return resultant_frame
 
 if __name__ == "__main__":
@@ -151,7 +168,15 @@ if __name__ == "__main__":
            count_flagged = True
     
     raw_frame = get_raw_data(player_name, game_count)
-    print(raw_frame.head())
+
+    assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
+
+    cur_datetime = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{cur_datetime}"
+    raw_frame.to_csv(csv_path)
+
+    logger.info(f"Created csv file at {csv_path}.")
+
 
     logging.shutdown()
 
