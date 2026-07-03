@@ -51,41 +51,58 @@ def verify_raw_source_data(raw_source: pd.DataFrame) -> bool:
     return True
     
 
-def parse_player_match_info(replay_json: dict, player_name: str) -> pd.DataFrame:
+def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dict) -> pd.DataFrame:
     # Parses individual game stats
     # Returns Data Frame with single row representing game stats
-    
+
+    replay_id: str = replay_json["id"]
     playlist: str = replay_json["match_type"]
     match_type: str = replay_json["team_size"]
     date = pd.to_datetime(replay_json["date"])
-    
-    
-    player_team: str = ""
+    match_won: bool = False
     player_index: int = None
+    player_team: str = None
+    opponent_team: str = None
+    goals_for: int = None
+    goals_against: int = None
 
     for index, player in enumerate(replay_json["blue"]["players"]):
         if player["name"] == player_name:
             player_team = "blue"
+            opponent_team = "orange"
             player_index = index
             break
     
-    if (player_team == ""):
+    if (player_team is None):
         for index, player in enumerate(replay_json["orange"]["players"]):
             if player["name"] == player_name:
                 player_team = "orange"
+                opponent_team = "blue"
                 player_index = index
                 break
     
-    stat_dict: dict = replay_json[player_team]["players"][index]["stats"]["core"]
-    base_dict: dict = { "datetime": date, "playlist": playlist, "match_type": match_type, "team": "home" if player_team == "blue" else "away" }
-    result_dict: dict = base_dict | stat_dict
+    goals_for = team_goals[player_team]
+    goals_against = team_goals[opponent_team]
+
+    if player_team == "orange":
+        if team_goals["orange"] > team_goals["blue"]:
+            match_won = True
+    elif player_team == "blue":
+        if team_goals["blue"] > team_goals["orange"]:
+            match_won = True
+    
+    stat_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["core"]
+    movement_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["movement"]
+    boost_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["boost"]
+    base_dict: dict = { "replay_id": replay_id, "datetime": date, "playlist": playlist, "match_type": match_type, "match_result": "W" if match_won else "L", "team_goals": goals_for, "opp_goals": goals_against }
+    result_dict: dict = base_dict | stat_dict | movement_dict | boost_dict
 
     resultant_frame = pd.DataFrame([result_dict])
 
     resultant_frame = resultant_frame.astype({
         "playlist": str,
         "match_type": str,
-        "team": str,
+        "match_result": str,
         "shots": int,
         "shots_against": int,
         "saves": int,
@@ -125,7 +142,7 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
     try:
         for replay in replays_list:
             replay_data = requests.get(BASE_URL + f"/{replay["id"]}", headers = AUTH_HEADER)
-            resultant_frame = pd.concat([resultant_frame, parse_player_match_info(replay_data.json(), player_name)], ignore_index = True)
+            resultant_frame = pd.concat([resultant_frame, parse_player_match_info(replay_data.json(), player_name, {"orange": replay["orange"]["goals"], "blue": replay["blue"]["goals"]})], ignore_index = True)
     
     except requests.exceptions.Timeout as e:
         logger.error(f"API request timed out: {e}")
@@ -136,7 +153,6 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
     except requests.exceptions.RequestException as e:
         logger.error(f"An ambiguous error occurred while handling the request: {e}")
     
-    logger.info(resultant_frame.columns)
     resultant_frame.reset_index(inplace=True)
 
     return resultant_frame
@@ -178,12 +194,16 @@ if __name__ == "__main__":
             logger.error(e)
     
     raw_frame: pd.DataFrame = get_raw_data(player_name, game_count)
-    logger.info(raw_frame.columns)
+    raw_frame.sort_values(by="datetime", ascending = True, inplace=True)
 
     assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
 
-    cur_datetime = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
-    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{cur_datetime}"
+    
+
+    first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%Y_%m_%d-%H_%M_%S")
+    last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%Y_%m_%d-%H_%M_%S")
+
+    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}"
     raw_frame.to_csv(csv_path, index=False)
 
     logger.info(f"Created csv file at {csv_path}.")
