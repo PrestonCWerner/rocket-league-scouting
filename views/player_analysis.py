@@ -181,6 +181,7 @@ if __name__ == "__main__":
     # Load 'player_csvs' path to read file names
     dir = Path("./player_csvs/")
     files = sorted([f for f in dir.iterdir() if f.is_file()])
+    del files[0]
 
     # If 'player_csvs/' is empty, return error message
     if len(files) == 0:
