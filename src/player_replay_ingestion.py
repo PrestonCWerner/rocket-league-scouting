@@ -142,7 +142,15 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
     try:
         for replay in replays_list:
             replay_data = requests.get(BASE_URL + f"/{replay["id"]}", headers = AUTH_HEADER)
-            resultant_frame = pd.concat([resultant_frame, parse_player_match_info(replay_data.json(), player_name, {"orange": replay["orange"]["goals"], "blue": replay["blue"]["goals"]})], ignore_index = True)
+            orange_goals: int = 0
+            blue_goals: int = 0
+            try:
+                orange_goals = replay["orange"]["goals"]
+                blue_goals = replay["blue"]["goals"]
+            except KeyError as e:
+                logger.info("One team went goalless.")
+
+            resultant_frame = pd.concat([resultant_frame, parse_player_match_info(replay_data.json(), player_name, {"orange": orange_goals, "blue": blue_goals})], ignore_index = True)
     
     except requests.exceptions.Timeout as e:
         logger.error(f"API request timed out: {e}")
@@ -200,8 +208,8 @@ if __name__ == "__main__":
 
     
 
-    first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%Y_%m_%d-%H_%M_%S")
-    last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%Y_%m_%d-%H_%M_%S")
+    first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
+    last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
 
     csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}"
     raw_frame.to_csv(csv_path, index=False)
