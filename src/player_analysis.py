@@ -46,7 +46,7 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
 
         win_query = """
             SELECT
-                COUNT(match_result) AS total_wins
+                match_result
             FROM raw_data
             WHERE match_result = 'W'
         """
@@ -67,13 +67,51 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
         goals_against_pg.metric(label = "**GOALS AGAINST PER GAME**", value = avg_df.iloc[0]["avg_goals_against"], border = True)
 
 
-
+@st.cache_data
 def show_boost_data(raw_data: pd.DataFrame) -> None:
     boost_query = """
         SELECT
-            
+            AVG(bpm)::DECIMAL(5,2) AS avg_bpm,
+            AVG(bcpm)::DECIMAL(5,2) AS avg_bcpm,
+            AVG(avg_amount)::DECIMAL(5,2) AS avg_boost_amt,
+            AVG(count_collected_big)::DECIMAL(6,2) AS avg_big_boost_collected,
+            AVG(count_collected_small)::DECIMAL(6,2) AS avg_small_boost_collected,
+            AVG(amount_overfill)::DECIMAL(5,2) AS avg_amt_overfill,
+            AVG(amount_used_while_supersonic)::DECIMAL(6,2) AS avg_amount_used_supersonic,
+            AVG(percent_zero_boost)::DECIMAL(5,2) AS avg_time_zero_boost,
+            AVG(percent_full_boost)::DECIMAL(5,2) AS avg_time_full_boost,
+            AVG(percent_boost_0_25)::DECIMAL(5,2) AS avg_time_0_25,
+            AVG(percent_boost_25_50)::DECIMAL(5,2) AS avg_time_25_50,
+            AVG(percent_boost_50_75)::DECIMAL(5,2) AS avg_time_50_75,
+            AVG(percent_boost_75_100)::DECIMAL(5,2) AS avg_time_75_100
+        FROM raw_data
     """
+    boost_df = duckdb.sql(boost_query).df()
 
+    bpm_col, bcpm_col, avg_boost_amt_col = st.columns(3)
+    avg_count_big_col_col, avg_count_small_col_col = st.columns(2)
+    avg_amt_overfill_col, avg_amount_used_supersonic_col, avg_time_zero_col, avg_time_full_col = st.columns(4)
+    avg_time_0_25_col, avg_time_25_50_col, avg_time_50_75_col, avg_time_75_100_col = st.columns(4)
+
+    avg_boost_amt_col.metric(label = "**AVERAGE BOOST**", value = boost_df.iloc[0]["avg_boost_amt"], border = True)
+    bpm_col.metric(label = "**AVERAGE BOOST USED PER MINUTE**", value = boost_df.iloc[0]["avg_bpm"], border = True)
+    bcpm_col.metric(label = "**AVERAGE BOOST COLLECTED PER MINUTE**", value = boost_df.iloc[0]["avg_bcpm"], border = True)
+    
+    avg_count_big_col_col.metric(label = "**AVERAGE NUMBER OF BIG BOOST PADS COLLECTED**", value = boost_df.iloc[0]["avg_big_boost_collected"], border = True)
+    avg_count_small_col_col.metric(label = "**AVERAGE NUMBER OF SMALL BOOST PADS COLLECTED**", value = boost_df.iloc[0]["avg_small_boost_collected"], border = True)
+
+    avg_amt_overfill_col.metric(label = "AVERAGE AMOUNT OVERFILL", value = boost_df.iloc[0]["avg_amt_overfill"], border = True)
+    avg_amount_used_supersonic_col.metric(label = "AVERAGE AMOUNT USED WHILE SUPERSONIC", value = boost_df.iloc[0]["avg_amount_used_supersonic"], border = True)
+    avg_time_zero_col.metric(label = "AVERAGE % OF TIME WITH 0 BOOST", value = boost_df.iloc[0]["avg_time_zero_boost"]/100, format = "percent", border = True)
+    avg_time_full_col.metric(label = "AVERAGE % OF TIME WITH FULL BOOST", value = boost_df.iloc[0]["avg_time_full_boost"]/100, format = "percent", border = True)
+
+    avg_time_0_25_col.metric(label = "AVERAGE TIME WITH 0-25% BOOST", value = boost_df.iloc[0]["avg_time_0_25"]/100, format = "percent", border = True)
+    avg_time_25_50_col.metric(label = "AVERAGE TIME WITH 25-50% BOOST", value = boost_df.iloc[0]["avg_time_25_50"]/100, format = "percent", border = True)
+    avg_time_50_75_col.metric(label = "AVERAGE TIME WITH 50-75% BOOST", value = boost_df.iloc[0]["avg_time_50_75"]/100, format = "percent", border = True)
+    avg_time_75_100_col.metric(label = "AVERAGE TIME WITH 75-100% BOOST", value = boost_df.iloc[0]["avg_time_75_100"]/100, format = "percent", border = True)
+
+
+@st.cache_data
 def show_movement_data(raw_data: pd.DataFrame) -> None:
     movement_query = """
         SELECT
@@ -117,7 +155,7 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
     win_loss_df["date"] = win_loss_df["date"].dt.strftime("%m/%d/%y")
 
     with st.container():
-        st.subheader("Win-Loss Data", text_alignment = "center")
+        st.subheader("Wins and Losses over Time", text_alignment = "center")
         st.bar_chart(win_loss_df, x = "date", y = "game_count", color = "match_result", stack = True)
        
 
@@ -126,8 +164,7 @@ if __name__ == "__main__":
     files = sorted([f for f in dir.iterdir() if f.is_file()])
 
     st.set_page_config(layout = "wide")
-    st.title("Rocket League Scouting Tool", text_alignment = "center")
-    st.space("large")
+    st.title(":blue[Rocket League Scouting Tool]", text_alignment = "center")
     
     with st.sidebar:
         file_picker = st.radio(
@@ -135,27 +172,57 @@ if __name__ == "__main__":
             files
         )
 
+
     raw_data: pd.DataFrame = load_data(file_picker)
+    raw_data.drop(columns = "index", inplace = True)
 
-    st.subheader(f"Currently viewing stats for {str(file_picker).split("_")[3].split("-")[0]} for last {len(raw_data)} games.", text_alignment = "center")
+    with st.container():
+        subhead_col = st.columns(1)[0]
+        game_type_col = st.columns(1)[0]
 
-    core_tab, movement_tab, boost_tab = st.tabs(["Core", "Movement", "Boost"])
+
+        with game_type_col:
+            game_type = st.radio(
+                "**FILTER BY GAME TYPE**",
+                ["Any", "1v1", "2v2", "3v3", "4v4"],
+                horizontal = True
+            )
+
+        with subhead_col:
+            st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{str(file_picker).split("_")[3].split("-")[0]}] for last :green[{len(raw_data)}] games.", text_alignment = "center")
+
     
-    with core_tab:
-        with st.container():
-            metrics, data_overview, win_loss = st.columns(3)
-
-            with metrics:
-                show_metrics(raw_data)
-            
-            with data_overview:
-                show_data(raw_data)
-
-            with win_loss:
-                show_win_loss(raw_data)
     
-    with boost_tab:
-        show_boost_data(raw_data)
-    
-    with movement_tab:
-        show_movement_data(raw_data)
+    game_dict_converter:dict = {"Any": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
+
+    game_type_filter_query = f"""
+        SELECT
+            *
+        FROM raw_data
+        {game_dict_converter[game_type]}
+    """
+
+    filtered_df = duckdb.sql(game_type_filter_query).df()
+
+    if len(filtered_df) == 0:
+        st.title(f"There are no games recorded for :red[{game_type}]. Please try a different game mode.")
+    else:
+        core_tab, movement_tab, boost_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**"])
+        with core_tab:
+            with st.container():
+                metrics, data_overview, win_loss = st.columns(3)
+
+                with metrics:
+                    show_metrics(filtered_df)
+                
+                with data_overview:
+                    show_data(filtered_df)
+
+                with win_loss:
+                    show_win_loss(filtered_df)
+        
+        with boost_tab:
+            show_boost_data(filtered_df)
+        
+        with movement_tab:
+            show_movement_data(filtered_df)
