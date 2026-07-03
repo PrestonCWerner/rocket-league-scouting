@@ -6,24 +6,30 @@ from pathlib import Path
 
 @st.cache_data
 def load_data(csv_to_report: str) -> pd.DataFrame:
+   # Caches raw csv data for further use
    return pd.read_csv(csv_to_report)
 
 @st.cache_data
 def show_data(raw_data: pd.DataFrame) -> None:
+    # Generates tabular data from raw_data source
     with st.container():
         st.subheader("Game Data Overview", text_alignment = "center")
         st.dataframe(raw_data)
 
 @st.cache_data
 def show_metrics(raw_data: pd.DataFrame) -> None:
+    # Generate metrics data for core statistics
+
     with st.container():
         st.subheader("Core Statistics", text_alignment = "center")
 
+        # Create columnar structure for the metrics cards
         win_col, mvp_col = st.columns(2)
         gpg, apg, svpg, scorepg = st.columns(4)
         shotpg, shot_pct_pg = st.columns(2)
         shots_against_pg, goals_against_pg = st.columns(2)
         
+        # This query aggregates core statistics
         avg_query = """SELECT 
                             AVG(goals)::DECIMAL(4,2) AS avg_goals, 
                             AVG(assists)::DECIMAL(4,2) AS avg_assists, 
@@ -36,6 +42,7 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
                         FROM raw_data"""
         avg_df = duckdb.sql(avg_query).df()
 
+        # This query is counting the total number of MVPs achieved in the dataset
         mvp_query = """
             SELECT
                 COUNT(mvp) AS total_mvps
@@ -44,6 +51,7 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
         """
         mvp_df = duckdb.sql(mvp_query).df()
 
+        # This query is counting the total number of wins achieved in the dataset
         win_query = """
             SELECT
                 match_result
@@ -52,6 +60,7 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
         """
         win_df = duckdb.sql(win_query).df()
 
+        # Metrics are shown on cards for easier readability
         win_col.metric(label = "**WIN %**", value = len(win_df)/len(raw_data), format = "percent", border = True)
         mvp_col.metric(label = "Total MVPs", value = mvp_df.iloc[0]["total_mvps"], border = True)
         
@@ -69,6 +78,9 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
 
 @st.cache_data
 def show_boost_data(raw_data: pd.DataFrame) -> None:
+    # Generates boost data page, which shows key stats related to boost management and usage
+
+    # This query averages a variety of boost stats
     boost_query = """
         SELECT
             AVG(bpm)::DECIMAL(5,2) AS avg_bpm,
@@ -88,11 +100,13 @@ def show_boost_data(raw_data: pd.DataFrame) -> None:
     """
     boost_df = duckdb.sql(boost_query).df()
 
+    # Create columnar structure for the metrics cards
     bpm_col, bcpm_col, avg_boost_amt_col = st.columns(3)
     avg_count_big_col_col, avg_count_small_col_col = st.columns(2)
     avg_amt_overfill_col, avg_amount_used_supersonic_col, avg_time_zero_col, avg_time_full_col = st.columns(4)
     avg_time_0_25_col, avg_time_25_50_col, avg_time_50_75_col, avg_time_75_100_col = st.columns(4)
 
+    # Metrics are shown on cards for easier readability
     avg_boost_amt_col.metric(label = "**AVERAGE BOOST**", value = boost_df.iloc[0]["avg_boost_amt"], border = True)
     bpm_col.metric(label = "**AVERAGE BOOST USED PER MINUTE**", value = boost_df.iloc[0]["avg_bpm"], border = True)
     bcpm_col.metric(label = "**AVERAGE BOOST COLLECTED PER MINUTE**", value = boost_df.iloc[0]["avg_bcpm"], border = True)
@@ -113,6 +127,9 @@ def show_boost_data(raw_data: pd.DataFrame) -> None:
 
 @st.cache_data
 def show_movement_data(raw_data: pd.DataFrame) -> None:
+    # Generates movement data metric cards
+
+    # This query averages key movement stats
     movement_query = """
         SELECT
             AVG(avg_speed)::DECIMAL(7,2) AS avg_speed,
@@ -129,6 +146,7 @@ def show_movement_data(raw_data: pd.DataFrame) -> None:
 
     movement_df = duckdb.sql(movement_query).df()
 
+    # Create columnar structure for the metrics cards
     speed_col, spatum_col = st.columns(2)
     supersonic_col, time_boost_speed_col, time_slow_speed_col = st.columns(3)
     ground_col, low_air_col, high_air_col, powerslide_col = st.columns(4)
@@ -140,8 +158,6 @@ def show_movement_data(raw_data: pd.DataFrame) -> None:
     time_boost_speed_col.metric(label = "**AVERAGE TIME SPENT BOOSTING**", value = movement_df.iloc[0]["avg_time_boost_speed"]/100, format = "percent", border = True)
     time_slow_speed_col.metric(label = "**AVERAGE TIME SPENT SLOW SPEED**", value = movement_df.iloc[0]["avg_supersonic"]/100, format = "percent", border = True)
 
-    
-
     ground_col.metric(label = "**AVERAGE % OF TIME SPENT ON THE GROUND**", value = movement_df.iloc[0]["avg_percent_ground"]/100, format = "percent", border = True)
     low_air_col.metric(label = "**AVERAGE % OF TIME SPENT IN LOW AIR**", value = movement_df.iloc[0]["avg_percent_low_air"]/100, format = "percent", border = True)
     high_air_col.metric(label = "**AVERAGE % OF TIME SPENT IN HIGH AIR**", value = movement_df.iloc[0]["avg_percent_high_air"]/100, format = "percent", border = True)
@@ -150,6 +166,8 @@ def show_movement_data(raw_data: pd.DataFrame) -> None:
 
 @st.cache_data
 def show_win_loss(raw_data: pd.DataFrame) -> None:
+    # Generates win-loss stacked bar chart, showing win-loss per day
+
     win_loss_query = "SELECT CAST(datetime AS DATETIME) AS date, match_result, COUNT(*) AS game_count FROM raw_data GROUP BY datetime, match_result ORDER BY datetime ASC"
     win_loss_df = duckdb.sql(win_loss_query).df()
     win_loss_df["date"] = win_loss_df["date"].dt.strftime("%m/%d/%y")
@@ -160,32 +178,36 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
        
 
 if __name__ == "__main__":
+    # Load 'player_csvs' path to read file names
     dir = Path("./player_csvs/")
     files = sorted([f for f in dir.iterdir() if f.is_file()])
 
+    # If 'player_csvs/' is empty, return error message
     if len(files) == 0:
         st.title(":red[File path './player_csvs/' has no CSVs saved. Please pull data from the 'pull data' page to populate this page.]")
-    
     else:
-
+        # Set page config layout. Components should occupy entirety of screen, hence "wide"
         st.set_page_config(layout = "wide")
         st.title(":blue[Rocket League Scouting Tool]", text_alignment = "center")
         
+        # Sidebar tool for picking which CSV file to analyze
         with st.sidebar:
-            file_picker = st.radio(
+            file_picker = st.selectbox(
                 "Pick a file to analyze",
                 files
             )
 
-
+        # Create dataframe from raw csv based on the currently chosen CSV file name in the sidebar tool
         raw_data: pd.DataFrame = load_data(file_picker)
+        # Drop unneccessary index column
         raw_data.drop(columns = "index", inplace = True)
 
+        # Create subheader container with subheader and game_type filter
         with st.container():
             subhead_col = st.columns(1)[0]
             game_type_col = st.columns(1)[0]
 
-
+            # This allows global filtering by game type (1v1, 2v2, 3v3, 4v4)
             with game_type_col:
                 game_type = st.radio(
                     "**FILTER BY GAME TYPE**",
@@ -197,7 +219,7 @@ if __name__ == "__main__":
                 st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{str(file_picker).split("_")[3].split("-")[0]}] for the last :green[{len(raw_data)}] games.", text_alignment = "center")
 
         
-        
+        # Create query to filter the data based on the game type chose in the radio widget
         game_dict_converter:dict = {"Any": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
 
         game_type_filter_query = f"""
@@ -209,9 +231,11 @@ if __name__ == "__main__":
 
         filtered_df = duckdb.sql(game_type_filter_query).df()
 
+        # If the filtered dataset is empty, alert user that the player has no games of that game type recorded in the provided dataset.
         if len(filtered_df) == 0:
             st.title(f"There are no games recorded for :red[{game_type}]. Please try a different game mode.")
         else:
+            # Create tabular navigation to compartmentalize key, distinctive statistics: Core stats, Movement stats, and Boost stats.
             core_tab, movement_tab, boost_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**"])
             with core_tab:
                 with st.container():
