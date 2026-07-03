@@ -211,7 +211,7 @@ if __name__ == "__main__":
     first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
     last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
 
-    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}"
+    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}.csv"
     raw_frame.to_csv(csv_path, index=False)
 
     logger.info(f"Created csv file at {csv_path}.")
