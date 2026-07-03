@@ -163,66 +163,71 @@ if __name__ == "__main__":
     dir = Path("./player_csvs/")
     files = sorted([f for f in dir.iterdir() if f.is_file()])
 
-    st.set_page_config(layout = "wide")
-    st.title(":blue[Rocket League Scouting Tool]", text_alignment = "center")
+    if len(files) == 0:
+        st.title(":red[File path './player_csvs/' has no CSVs saved. Please pull data from the 'pull data' page to populate this page.]")
     
-    with st.sidebar:
-        file_picker = st.radio(
-            "Pick a file to analyze",
-            files
-        )
+    else:
 
-
-    raw_data: pd.DataFrame = load_data(file_picker)
-    raw_data.drop(columns = "index", inplace = True)
-
-    with st.container():
-        subhead_col = st.columns(1)[0]
-        game_type_col = st.columns(1)[0]
-
-
-        with game_type_col:
-            game_type = st.radio(
-                "**FILTER BY GAME TYPE**",
-                ["Any", "1v1", "2v2", "3v3", "4v4"],
-                horizontal = True
+        st.set_page_config(layout = "wide")
+        st.title(":blue[Rocket League Scouting Tool]", text_alignment = "center")
+        
+        with st.sidebar:
+            file_picker = st.radio(
+                "Pick a file to analyze",
+                files
             )
 
-        with subhead_col:
-            st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{str(file_picker).split("_")[3].split("-")[0]}] for last :green[{len(raw_data)}] games.", text_alignment = "center")
 
-    
-    
-    game_dict_converter:dict = {"Any": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
+        raw_data: pd.DataFrame = load_data(file_picker)
+        raw_data.drop(columns = "index", inplace = True)
 
-    game_type_filter_query = f"""
-        SELECT
-            *
-        FROM raw_data
-        {game_dict_converter[game_type]}
-    """
+        with st.container():
+            subhead_col = st.columns(1)[0]
+            game_type_col = st.columns(1)[0]
 
-    filtered_df = duckdb.sql(game_type_filter_query).df()
 
-    if len(filtered_df) == 0:
-        st.title(f"There are no games recorded for :red[{game_type}]. Please try a different game mode.")
-    else:
-        core_tab, movement_tab, boost_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**"])
-        with core_tab:
-            with st.container():
-                metrics, data_overview, win_loss = st.columns(3)
+            with game_type_col:
+                game_type = st.radio(
+                    "**FILTER BY GAME TYPE**",
+                    ["Any", "1v1", "2v2", "3v3", "4v4"],
+                    horizontal = True
+                )
 
-                with metrics:
-                    show_metrics(filtered_df)
-                
-                with data_overview:
-                    show_data(filtered_df)
+            with subhead_col:
+                st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{str(file_picker).split("_")[3].split("-")[0]}] for the last :green[{len(raw_data)}] games.", text_alignment = "center")
 
-                with win_loss:
-                    show_win_loss(filtered_df)
         
-        with boost_tab:
-            show_boost_data(filtered_df)
         
-        with movement_tab:
-            show_movement_data(filtered_df)
+        game_dict_converter:dict = {"Any": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
+
+        game_type_filter_query = f"""
+            SELECT
+                *
+            FROM raw_data
+            {game_dict_converter[game_type]}
+        """
+
+        filtered_df = duckdb.sql(game_type_filter_query).df()
+
+        if len(filtered_df) == 0:
+            st.title(f"There are no games recorded for :red[{game_type}]. Please try a different game mode.")
+        else:
+            core_tab, movement_tab, boost_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**"])
+            with core_tab:
+                with st.container():
+                    metrics, data_overview, win_loss = st.columns(3)
+
+                    with metrics:
+                        show_metrics(filtered_df)
+                    
+                    with data_overview:
+                        show_data(filtered_df)
+
+                    with win_loss:
+                        show_win_loss(filtered_df)
+            
+            with boost_tab:
+                show_boost_data(filtered_df)
+            
+            with movement_tab:
+                show_movement_data(filtered_df)

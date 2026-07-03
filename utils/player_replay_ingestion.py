@@ -165,48 +165,13 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
 
     return resultant_frame
 
-if __name__ == "__main__":
+def ingest_data(player_name: str, game_count: int) -> str:
     initiate_logger()
-
-    # Get the player to analyze and number of games to analyze
-    # Validate that name and count are of correct types
-    player_name: str = ""
-    game_count: int = 0
-    player_name_flag: bool = True
-    game_count_flag: bool = True
-
-    name_validation_list = [" ", "/", "\\", "<", ">", "\"", "\'"]
-
-    while player_name_flag or game_count_flag:
-        try:
-            if player_name_flag:
-                player_name = str(input("Please enter player name: "))
-                
-                for char in player_name:
-                    if char in name_validation_list:
-                        raise ValueError(f"Character '{char}' not accepted in player name.")
-                if len(player_name) < 2 or len(player_name) > 32:
-                    raise ValueError(f"Player name must be between 2 characters and 32 characters long.")
-
-                player_name_flag = False
-            
-            if game_count_flag:
-                game_count = int(input("Please enter game count for analysis: "))
-
-                if game_count >= 50 or game_count < 1:
-                    raise ValueError(f"Game count must be between 1 and 50 games.")
-
-                game_count_flag = False
-        
-        except ValueError as e:
-            logger.error(e)
     
     raw_frame: pd.DataFrame = get_raw_data(player_name, game_count)
     raw_frame.sort_values(by="datetime", ascending = True, inplace=True)
 
     assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
-
-    
 
     first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
     last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
@@ -218,5 +183,7 @@ if __name__ == "__main__":
 
 
     logging.shutdown()
+
+    return csv_path
 
 
