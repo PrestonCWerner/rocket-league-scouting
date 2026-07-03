@@ -22,6 +22,7 @@ Once the streamlit app is run, users are prompted to enter a player name and a n
     API_AUTHORIZATION_KEY=PLACEHOLDER
     BASE_URL=https://ballchasing.com/api/replays
 ```
+5. Create a .logs folder in the root directory with one file: 'player_replay_ingestion.logs'
 
 ### STEP 2: Run the app
 1. Once your environment is setup, you can run the app by executing the following script from the root directory of the project:
