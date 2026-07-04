@@ -270,7 +270,8 @@ if __name__ == "__main__":
                 car_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
                 car_type = st.radio(
                     "**FILTER BY CAR**",
-                    car_list
+                    car_list,
+                    horizontal = True
                 )
 
             with subhead_col:
