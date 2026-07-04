@@ -32,7 +32,7 @@ def show_positioning_data(raw_data: pd.DataFrame) -> None:
                 AVG(avg_distance_to_ball) AS avg_distance_to_ball,
                 AVG(avg_distance_to_ball_possession) AS avg_distance_to_ball_possession,
                 AVG(avg_distance_to_ball_no_possession) AS avg_distance_to_ball_no_possession,
-                AVG(avg_distance_to_mates) AS avg_distance_to_mates
+                AVG(avg_distance_to_mates) AS avg_distance_to_mates,
                 AVG(percent_defensive_third) AS avg_pct_def_third,
                 AVG(percent_offensive_third) AS avg_pct_off_third,
                 AVG(percent_neutral_third ) AS avg_pct_neu_third,
@@ -267,6 +267,12 @@ if __name__ == "__main__":
                     horizontal = True
                 )
 
+                car_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
+                car_type = st.radio(
+                    "**FILTER BY CAR**",
+                    car_list
+                )
+
             with subhead_col:
                 cur_player_name = df_picker.split("_")[0]
                 cur_game_count = df_picker.split("_")[1]
@@ -274,13 +280,16 @@ if __name__ == "__main__":
 
         
         # Create query to filter the data based on the game type chose in the radio widget
-        game_dict_converter:dict = {"All": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
+        game_dict_converter:dict = {"All": "", "1v1": "AND match_type = 1", "2v2": "AND match_type = 2", "3v3": "AND match_type = 3", "4v4": "AND match_type = 4"}
+        car_filter: str = "" if car_type == "All" else f"AND car_name = '{car_type}'"
 
         game_type_filter_query = f"""
             SELECT
                 *
             FROM cur_df
+            WHERE 1 = 1
             {game_dict_converter[game_type]}
+            {car_filter}
         """
 
         filtered_df = duckdb.sql(game_type_filter_query).df()
