@@ -165,7 +165,7 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
 
     return resultant_frame
 
-def ingest_data(player_name: str, game_count: int) -> str:
+def ingest_data(player_name: str, game_count: int) -> pd.DataFrame:
     initiate_logger()
     
     raw_frame: pd.DataFrame = get_raw_data(player_name, game_count)
@@ -173,17 +173,17 @@ def ingest_data(player_name: str, game_count: int) -> str:
 
     assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
 
-    first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
-    last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
+    # first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
+    # last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
 
-    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}.csv"
-    raw_frame.to_csv(csv_path, index=False)
+    #csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}.csv"
+   # raw_frame.to_csv(csv_path, index=False)
 
-    logger.info(f"Created csv file at {csv_path}.")
+    #logger.info(f"Created csv file at {csv_path}.")
 
 
     logging.shutdown()
 
-    return csv_path
+    return raw_frame
 
 
