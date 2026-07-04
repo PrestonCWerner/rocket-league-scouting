@@ -40,7 +40,7 @@ if __name__ == "__main__":
             if not char_flag and game_count is not None and not df_exists:
                 st.success(f"Form submitted successfully. Pulling {player_name}'s Ballchasing data from the last {game_count} games!")
                 with st.spinner("Loading data..."):
-                    new_df: pd.DataFrame = ingest_data(player_name, game_count)
+                    new_df: pd.DataFrame = ingest_data(player_name, game_count, st.session_state["api_key"])
                     st.session_state["df_manifest"].append(f"{player_name}_{game_count}")
                     st.session_state["df_dict"][f"{player_name}_{game_count}"] = new_df
                 
