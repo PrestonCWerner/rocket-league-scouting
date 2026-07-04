@@ -1,9 +1,11 @@
 # rocket-league-scouting
 
 ## OVERVIEW
-This project is meant to address the need for a scouting tool in a Rocket League draft league. Ballchasing is an online platform that will parse uploaded replays and store the data on their platform. You can access this data through the Ballchasing API, which is pretty neat.
+An end-to-end data engineering project that ingests Rocket League match data from the Ballchasing API, transforms it into analytics-ready datasets using Python and DuckDB, and serves interactive scouting dashboards through Streamlit.
 
-Once the streamlit app is run, users are prompted to enter a player name and a number of games to analyze the player's performance over. Users are then able to access simple analytical reports based on the data pulled from the Ballchasing API. The full dataset created upon ingestion is available in a csv format in 'player_csvs/'.
+## ARCHITECTURE
+Ballchasing API &rarr Python Data Ingestion &rarr Raw Match Data &rarr Pandas Data Cleaning
+&rarr DuckDB Transformations &rarr Analytics-Ready Tables &rarr Streamlit Dashboard &rarr Player Analysis
 
 ## DETAILED OPERATIONAL INSTRUCTIONS
 
