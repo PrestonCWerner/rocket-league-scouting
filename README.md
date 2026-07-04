@@ -50,12 +50,7 @@ Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Locall
 ```
     pip install -r requirements.txt
 ```
-4. Create a .env file in the root folder of the project. Copy and paste the following block into your .env file (replacing PLACEHOLDER with your personal API authorization key for Ballchasing.):
-```
-    API_AUTHORIZATION_KEY=PLACEHOLDER
-    BASE_URL=https://ballchasing.com/api/replays
-```
-5. Create a .logs folder in the root directory with one file: 'player_replay_ingestion.logs'
+4. Create a .logs folder in the root directory with one file: 'player_replay_ingestion.logs'
 
 ### STEP 2: Run the app
 1. Once your environment is setup, you can run the app by executing the following script from the root directory of the project:
