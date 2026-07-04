@@ -4,8 +4,8 @@
 An end-to-end data engineering project that ingests Rocket League match data from the Ballchasing API, transforms it into analytics-ready datasets using Python and DuckDB, and serves interactive scouting dashboards through Streamlit.
 
 ## ARCHITECTURE
-Ballchasing API &rarr Python Data Ingestion &rarr Raw Match Data &rarr Pandas Data Cleaning
-&rarr DuckDB Transformations &rarr Analytics-Ready Tables &rarr Streamlit Dashboard &rarr Player Analysis
+Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Pandas Data Cleaning
+&rarr; DuckDB Transformations &rarr; Analytics-Ready Tables &rarr; Streamlit Dashboard &rarr; Player Analysis
 
 ## DETAILED OPERATIONAL INSTRUCTIONS
 
