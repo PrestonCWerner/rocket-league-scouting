@@ -8,6 +8,29 @@ Current Status: Active development. Core ingestion, transformation, and analytic
 ## ARCHITECTURE
 Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Locally-Saved CSV  &rarr; Pandas Data Cleaning &rarr; DuckDB Transformations &rarr; Analytics-Ready Tables &rarr; Streamlit Dashboard &rarr; Player Performance Analysis
 
+## SCREENSHOTS
+
+### Data Ingestion
+<img width="2398" height="985" alt="csv_file_saved" src="https://github.com/user-attachments/assets/06775ae2-faff-4a58-a231-aeab5ab7485f" />
+
+### Player Analysis - Core Statistics
+<img width="2489" height="1112" alt="player_analysis_core" src="https://github.com/user-attachments/assets/e8ae1ff7-27ba-4a2d-a609-a9199cae5125" />
+
+### Player Analysis - Movement Statistics
+<img width="2516" height="916" alt="player_analysis_movement" src="https://github.com/user-attachments/assets/d78691ab-2af9-43a9-b96f-a64a24a8dbf1" />
+
+### Player Analysis - Boost Statistics
+<img width="2431" height="1103" alt="player_analysis_boost" src="https://github.com/user-attachments/assets/5760a655-9d92-43c4-b7cb-3aa2cedbd0a7" />
+
+### Player Analysis - File Picker
+<img width="303" height="471" alt="file_selection" src="https://github.com/user-attachments/assets/1fe5db61-d35f-4574-9016-546c45e16298" />
+
+
+### Player Analysis - Replay Data Not Found
+<img width="2429" height="1149" alt="replays_not_found_filter" src="https://github.com/user-attachments/assets/a0edb360-0624-41fe-b223-d1988774e2ad" />
+
+
+
 ## DETAILED OPERATIONAL INSTRUCTIONS
 
 ### STEP 1: Creating the proper environment.
