@@ -178,14 +178,10 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
        
 
 if __name__ == "__main__":
-    # Load 'player_csvs' path to read file names
-    dir = Path("./player_csvs/")
-    files = sorted([f for f in dir.iterdir() if f.is_file()])
-    del files[0]
-
     # If 'player_csvs/' is empty, return error message
-    if len(files) == 0:
-        st.title(":red[File path './player_csvs/' has no CSVs saved. Please pull data from the 'pull data' page to populate this page.]")
+    if len(st.session_state["df_manifest"]) == 0:
+        print(st.session_state["df_manifest"])
+        st.title(":red[No DataFrames are currently in the manifest. Please pull data from the 'pull data' page to populate this page.]")
     else:
         # Set page config layout. Components should occupy entirety of screen, hence "wide"
         st.set_page_config(layout = "wide")
@@ -193,15 +189,17 @@ if __name__ == "__main__":
         
         # Sidebar tool for picking which CSV file to analyze
         with st.sidebar:
-            file_picker = st.selectbox(
-                "Pick a file to analyze",
-                files
+            df_picker = st.selectbox(
+                "Pick a dataset to analyze",
+                st.session_state["df_manifest"]
             )
 
+        duckdb.register("cur_df", st.session_state["df_dict"][df_picker])
+
         # Create dataframe from raw csv based on the currently chosen CSV file name in the sidebar tool
-        raw_data: pd.DataFrame = load_data(file_picker)
+        #cur_df: pd.DataFrame = load_data(st.session_state["df_dict"][""]
         # Drop unneccessary index column
-        raw_data.drop(columns = "index", inplace = True)
+        #cur_df.drop(columns = "index", inplace = True)
 
         # Create subheader container with subheader and game_type filter
         with st.container():
@@ -217,7 +215,9 @@ if __name__ == "__main__":
                 )
 
             with subhead_col:
-                st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{str(file_picker).split("_")[3].split("-")[0]}] for the last :green[{len(raw_data)}] games.", text_alignment = "center")
+                cur_player_name = df_picker.split("_")[0]
+                cur_game_count = df_picker.split("_")[1]
+                st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{cur_player_name}] for the last :green[{cur_game_count}] games.", text_alignment = "center")
 
         
         # Create query to filter the data based on the game type chose in the radio widget
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         game_type_filter_query = f"""
             SELECT
                 *
-            FROM raw_data
+            FROM cur_df
             {game_dict_converter[game_type]}
         """
 

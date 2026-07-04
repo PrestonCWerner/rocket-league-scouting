@@ -4,13 +4,7 @@ import pandas as pd
 import requests
 import logging
 from datetime import datetime
-from dotenv import load_dotenv
 
-# Environment variable assignment for API Key and URL
-load_dotenv()
-API_AUTH_KEY = os.getenv("API_AUTHORIZATION_KEY")
-AUTH_HEADER = {"Authorization": API_AUTH_KEY}
-BASE_URL = os.getenv("BASE_URL")
 
 # Initiate global Logger
 logger = logging.getLogger("player_replay_ingestion.py")
@@ -112,20 +106,21 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
         "shooting_percentage": float
     })
 
-
     return resultant_frame
 
     
 
-def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
+def get_raw_data(player_name: str, game_count: int, api_auth_key: str) -> pd.DataFrame:
     # Ingests raw data into a Data Frame for transformation at a later step.
     # Output is a Data Frame where each row is an individual game performance by the selected player.
+
+    AUTH_HEADER = {"Authorization": api_auth_key}
 
     resultant_frame = pd.DataFrame()
 
     try:
         # Get replays overview data
-        replays_overview_data = requests.get(BASE_URL + f"?player-name={player_name}&count={game_count}", headers = AUTH_HEADER)
+        replays_overview_data = requests.get("https://ballchasing.com/api/replays" + f"?player-name={player_name}&count={game_count}", headers = AUTH_HEADER)
 
     except requests.exceptions.Timeout as e:
         logger.error(f"API request timed out: {e}")
@@ -141,7 +136,7 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
 
     try:
         for replay in replays_list:
-            replay_data = requests.get(BASE_URL + f"/{replay["id"]}", headers = AUTH_HEADER)
+            replay_data = requests.get("https://ballchasing.com/api/replays" + f"/{replay["id"]}", headers = AUTH_HEADER)
             orange_goals: int = 0
             blue_goals: int = 0
             try:
@@ -165,25 +160,16 @@ def get_raw_data(player_name: str, game_count: int) -> pd.DataFrame:
 
     return resultant_frame
 
-def ingest_data(player_name: str, game_count: int) -> str:
+def ingest_data(player_name: str, game_count: int, api_auth_key: str) -> pd.DataFrame:
     initiate_logger()
     
-    raw_frame: pd.DataFrame = get_raw_data(player_name, game_count)
+    raw_frame: pd.DataFrame = get_raw_data(player_name, game_count, api_auth_key)
     raw_frame.sort_values(by="datetime", ascending = True, inplace=True)
 
     assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
 
-    first_datetime = raw_frame.head(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
-    last_datetime = raw_frame.tail(1)["datetime"].iloc[0].strftime("%m_%d_%Y-%H_%M_%S")
-
-    csv_path = f"./player_csvs/Scouting_Report_{player_name}-{first_datetime}__{last_datetime}.csv"
-    raw_frame.to_csv(csv_path, index=False)
-
-    logger.info(f"Created csv file at {csv_path}.")
-
-
     logging.shutdown()
 
-    return csv_path
+    return raw_frame
 
 
