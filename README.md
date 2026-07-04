@@ -69,7 +69,8 @@ You may now analyze player performances much easier than before and maintain his
 1. Add functionality to upload a CSV or similar with player names and game counts to ingest a large amount of data at once.
 2. Add further options for filtering by playlist type (private, public) and rank for competitive games (see how players perform in their Champ lobbies vs Diamond lobbies, and so on).
 3. Reformat analytics reports to be more eye-friendly.
+4. Containerize application with Docker.
 
 ## BALLCHASING API
 For more information on the ballchasing.com API, including rate limits, visit: https://ballchasing.com/doc/api.
-5. Containerize application with Docker.
+
