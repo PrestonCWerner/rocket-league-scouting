@@ -57,12 +57,11 @@ if __name__ == "__main__":
 
             with st.form(key="player_info_form", clear_on_submit=True):
                 player_name: int = st.text_input(label = "**ENTER PLAYER NAME**", value="", placeholder = "John Doe", max_chars = 32, width = 200)
-                game_count: int = st.number_input(label = "**ENTER NUMBER OF GAMES**", value=None, placeholder = "(Between 1 and 50)", min_value = 1, max_value = 50, width = 200)
+                game_count: int = st.number_input(label = "**ENTER NUMBER OF GAMES**", value=None, placeholder = "(Between 1 and 50)", min_value = 1, max_value = 200, width = 200)
 
                 submit_button = st.form_submit_button(label="Submit")
 
             if submit_button:
-                
                 if not player_name.isalnum():
                     st.error(f"'{player_name}' must be comprised of alpha-numeric characters.")
                 elif game_count is None:
@@ -74,10 +73,15 @@ if __name__ == "__main__":
                     st.success(f"Form submitted successfully. Pulling {player_name}'s Ballchasing data from the last {game_count} games!")
                     with st.spinner("Loading data..."):
                         new_df: pd.DataFrame = ingest_data(player_name, game_count, st.session_state["api_key"])
-                        st.session_state["df_manifest"].append(f"{player_name}_{game_count}")
-                        st.session_state["df_dict"][f"{player_name}_{game_count}"] = new_df
+                        if "error" in new_df.columns:
+                            st.error(f"Last {game_count} games for player '{player_name}' could not be found.")
+                        else:
+                            new_df.sort_values(by="datetime", ascending = True, inplace=True)
+                            st.session_state["df_manifest"].append(f"{player_name}_{game_count}")
+                            st.session_state["df_dict"][f"{player_name}_{game_count}"] = new_df
+                            st.success(f"Successfully loaded data into DataFrame list.")
                     
-                    st.success(f"Successfully loaded data into DataFrame list.")
+                    
     else:
         st.title("Please add a Ballchasing API Authentication Key to use this Scouting Tool. Visit https://ballchasing.com/upload to find your key.")
 

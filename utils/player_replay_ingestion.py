@@ -68,13 +68,16 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
             player_index = index
             break
     
-    if (player_team is None):
+    if player_team is None:
         for index, player in enumerate(replay_json["orange"]["players"]):
             if player["name"] == player_name:
                 player_team = "orange"
                 opponent_team = "blue"
                 player_index = index
                 break
+    
+    if player_team is None:
+        return pd.DataFrame({})
 
     platform: str = replay_json[player_team]["players"][player_index]["id"]["platform"]
     car_name: str = replay_json[player_team]["players"][player_index]["car_name"]
@@ -128,6 +131,11 @@ def get_raw_data(player_name: str, game_count: int, api_auth_key: str) -> pd.Dat
         # Get replays overview data
         replays_overview_data = requests.get("https://ballchasing.com/api/replays" + f"?player-name={player_name}&count={game_count}", headers = AUTH_HEADER)
 
+
+        if not replays_overview_data.json()['list']:
+            error_dict = {"error" : ["Player does not exist."]}
+            return pd.DataFrame(error_dict)
+
     except requests.exceptions.Timeout as e:
         logger.error(f"API request timed out: {e}")
     except requests.exceptions.ConnectionError as e:
@@ -170,9 +178,11 @@ def ingest_data(player_name: str, game_count: int, api_auth_key: str) -> pd.Data
     initiate_logger()
     
     raw_frame: pd.DataFrame = get_raw_data(player_name, game_count, api_auth_key)
-    raw_frame.sort_values(by="datetime", ascending = True, inplace=True)
 
-    assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
+    if "error" in raw_frame.columns:
+        return raw_frame
+    else:
+        assert verify_raw_source_data(raw_frame), logging.critical("Raw DataFrame could not be verified; see log for details.")
 
     logging.shutdown()
 

@@ -275,7 +275,7 @@ if __name__ == "__main__":
 
             with subhead_col:
                 cur_player_name = df_picker.split("_")[0]
-                cur_game_count = df_picker.split("_")[1]
+                cur_game_count = len(st.session_state["df_dict"][df_picker])
                 st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{cur_player_name}] for the last :green[{cur_game_count}] games.", text_alignment = "center")
 
         
