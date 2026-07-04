@@ -19,7 +19,54 @@ def show_data(raw_data: pd.DataFrame) -> None:
 @st.cache_data
 def show_positioning_data(raw_data: pd.DataFrame) -> None:
     with st.container():
+        st.subheader("Positioning Statistics", text_alignment = "center")
+
+        adtb_col, adtbp_col, adtbnp_col, adtm_col = st.columns(4)
+        apdt_col,apnt_col, apot_col, apdh_col, apoh_col = st.columns(5)
+        apbb_col, apib_col = st.columns(2)
+        apmb_col, apmf_col, apctb_col, apffb_col = st.columns(4)
         
+
+        avg_query = """
+            SELECT
+                AVG(avg_distance_to_ball) AS avg_distance_to_ball,
+                AVG(avg_distance_to_ball_possession) AS avg_distance_to_ball_possession,
+                AVG(avg_distance_to_ball_no_possession) AS avg_distance_to_ball_no_possession,
+                AVG(avg_distance_to_mates) AS avg_distance_to_mates
+                AVG(percent_defensive_third) AS avg_pct_def_third,
+                AVG(percent_offensive_third) AS avg_pct_off_third,
+                AVG(percent_neutral_third ) AS avg_pct_neu_third,
+                AVG(percent_defensive_half) AS avg_pct_def_half,
+                AVG(percent_offensive_half) AS avg_pct_off_half,
+                AVG(percent_behind_ball) AS avg_pct_behind_ball,
+                AVG(percent_infront_ball) AS avg_pct_infront_ball,
+                AVG(percent_most_back) AS avg_pct_most_back,
+                AVG(percent_most_forward) AS avg_pct_most_forward,
+                AVG(percent_closest_to_ball) AS avg_pct_closest_to_ball,
+                AVG(percent_farthest_from_ball) AS avg_pct_farthest_from_ball
+            FROM raw_data
+        """
+
+        avg_df = duckdb.sql(avg_query).df()
+
+        adtb_col.metric(label = "**AVERAGE DISTANCE TO BALL**", value = avg_df.iloc[0]["avg_distance_to_ball"], border = True)
+        adtbp_col.metric(label = "**AVERAGE DISTANCE TO BALL - POSSESSION**", value = avg_df.iloc[0]["avg_distance_to_ball_possession"], border = True)
+        adtbnp_col.metric(label = "**AVERAGE DISTANCE TO BALL - OUT OF POSSESSION**", value = avg_df.iloc[0]["avg_distance_to_ball_no_possession"], border = True)
+        adtm_col.metric(label = "**AVERAGE DISTANCE TO TEAMMATES**", value = avg_df.iloc[0]["avg_distance_to_mates"], border = True)
+
+        apdt_col.metric(label = "**AVERAGE % OF TIME DEFENSIVE THIRD**", value = avg_df.iloc[0]["avg_pct_def_third"]/100, format = "percent", border = True)
+        apnt_col.metric(label = "**AVERAGE % OF TIME NEUTRAL THIRD**", value = avg_df.iloc[0]["avg_pct_neu_third"]/100, format = "percent", border = True)
+        apot_col.metric(label = "**AVERAGE % OF TIME OFFENSIVE THIRD**", value = avg_df.iloc[0]["avg_pct_off_third"]/100, format = "percent", border = True)
+        apdh_col.metric(label = "**AVERAGE % OF TIME DEFENSIVE HALF**", value = avg_df.iloc[0]["avg_pct_def_half"]/100, format = "percent", border = True)
+        apoh_col.metric(label = "**AVERAGE % OF TIME OFFENSIVE HALF**", value = avg_df.iloc[0]["avg_pct_off_half"]/100, format = "percent", border = True)
+
+        apbb_col.metric(label = "**AVERAGE % OF TIME BEHIND BALL**", value = avg_df.iloc[0]["avg_pct_behind_ball"]/100, format = "percent", border = True)
+        apib_col.metric(label = "**AVERAGE % OF TIME IN FRONT OF BALL**", value = avg_df.iloc[0]["avg_pct_infront_ball"]/100, format = "percent", border = True)
+
+        apmb_col.metric(label = "**AVERAGE % OF TIME FURTHEST BACK**", value = avg_df.iloc[0]["avg_pct_most_back"]/100, format = "percent", border = True)
+        apmf_col.metric(label = "**AVERAGE % OF TIME FURTHEST FORWARD**", value = avg_df.iloc[0]["avg_pct_most_forward"]/100, format = "percent", border = True)
+        apctb_col.metric(label = "**AVERAGE % OF TIME CLOSEST TO BALL**", value = avg_df.iloc[0]["avg_pct_closest_to_ball"]/100, format = "percent", border = True)
+        apffb_col.metric(label = "**AVERAGE % OF TIME FARTHEST FROM BALL**", value = avg_df.iloc[0]["avg_pct_farthest_from_ball"]/100, format = "percent", border = True)
 
 @st.cache_data
 def show_metrics(raw_data: pd.DataFrame) -> None:
@@ -35,16 +82,17 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
         shots_against_pg, goals_against_pg = st.columns(2)
         
         # This query aggregates core statistics
-        avg_query = """SELECT 
-                            AVG(goals)::DECIMAL(4,2) AS avg_goals, 
-                            AVG(assists)::DECIMAL(4,2) AS avg_assists, 
-                            AVG(saves)::DECIMAL(4,2) AS avg_saves, 
-                            AVG(score)::DECIMAL(6,2) AS avg_score, 
-                            AVG(shots)::DECIMAL(4, 2) AS avg_shots, 
-                            AVG(shooting_percentage)::DECIMAL(4,2) AS avg_shooting_pct,
-                            AVG(shots_against)::DECIMAL(4,2) AS avg_shots_against,
-                            AVG(goals_against)::DECIMAL(4,2) AS avg_goals_against
-                        FROM raw_data"""
+        avg_query = """
+            SELECT 
+                AVG(goals)::DECIMAL(4,2) AS avg_goals, 
+                AVG(assists)::DECIMAL(4,2) AS avg_assists, 
+                AVG(saves)::DECIMAL(4,2) AS avg_saves, 
+                AVG(score)::DECIMAL(6,2) AS avg_score, 
+                AVG(shots)::DECIMAL(4, 2) AS avg_shots, 
+                AVG(shooting_percentage)::DECIMAL(4,2) AS avg_shooting_pct,
+                AVG(shots_against)::DECIMAL(4,2) AS avg_shots_against,
+                AVG(goals_against)::DECIMAL(4,2) AS avg_goals_against
+            FROM raw_data"""
         avg_df = duckdb.sql(avg_query).df()
 
         # This query is counting the total number of MVPs achieved in the dataset
