@@ -38,7 +38,7 @@ Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Locall
 
 
 
-## DETAILED OPERATIONAL INSTRUCTIONS
+## INSTRUCTIONS
 
 ### STEP 1: Creating the proper environment.
 1. Ensure that you have Python installed in your local environment. If you don't have it, you can download it from https://www.python.org/downloads/.
