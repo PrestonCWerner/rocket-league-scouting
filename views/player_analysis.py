@@ -17,6 +17,11 @@ def show_data(raw_data: pd.DataFrame) -> None:
         st.dataframe(raw_data)
 
 @st.cache_data
+def show_positioning_data(raw_data: pd.DataFrame) -> None:
+    with st.container():
+        
+
+@st.cache_data
 def show_metrics(raw_data: pd.DataFrame) -> None:
     # Generate metrics data for core statistics
 
@@ -210,7 +215,7 @@ if __name__ == "__main__":
             with game_type_col:
                 game_type = st.radio(
                     "**FILTER BY GAME TYPE**",
-                    ["Any", "1v1", "2v2", "3v3", "4v4"],
+                    ["All", "1v1", "2v2", "3v3", "4v4"],
                     horizontal = True
                 )
 
@@ -221,7 +226,7 @@ if __name__ == "__main__":
 
         
         # Create query to filter the data based on the game type chose in the radio widget
-        game_dict_converter:dict = {"Any": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
+        game_dict_converter:dict = {"All": "", "1v1": "WHERE match_type = 1", "2v2": "WHERE match_type = 2", "3v3": "WHERE match_type = 3", "4v4": "WHERE match_type = 4"}
 
         game_type_filter_query = f"""
             SELECT
@@ -231,13 +236,14 @@ if __name__ == "__main__":
         """
 
         filtered_df = duckdb.sql(game_type_filter_query).df()
+        filtered_df.drop(columns="index", inplace=True)
 
         # If the filtered dataset is empty, alert user that the player has no games of that game type recorded in the provided dataset.
         if len(filtered_df) == 0:
             st.title(f"There are no games recorded for :red[{game_type}]. Please try a different game mode.")
         else:
             # Create tabular navigation to compartmentalize key, distinctive statistics: Core stats, Movement stats, and Boost stats.
-            core_tab, movement_tab, boost_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**"])
+            core_tab, movement_tab, boost_tab, positioning_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**", "**:yellow[POSITIONING]**"])
             with core_tab:
                 with st.container():
                     metrics, data_overview, win_loss = st.columns(3)
@@ -256,3 +262,6 @@ if __name__ == "__main__":
             
             with movement_tab:
                 show_movement_data(filtered_df)
+            
+            with positioning_tab:
+                show_positioning_data(filtered_df)

@@ -53,6 +53,7 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
     playlist: str = replay_json["match_type"]
     match_type: str = replay_json["team_size"]
     date = pd.to_datetime(replay_json["date"])
+    
     match_won: bool = False
     player_index: int = None
     player_team: str = None
@@ -74,6 +75,10 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
                 opponent_team = "blue"
                 player_index = index
                 break
+
+    platform: str = replay_json[player_team]["players"][player_index]["id"]["platform"]
+    car_name: str = replay_json[player_team]["players"][player_index]["car_name"]
+
     
     goals_for = team_goals[player_team]
     goals_against = team_goals[opponent_team]
@@ -88,8 +93,9 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
     stat_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["core"]
     movement_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["movement"]
     boost_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["boost"]
-    base_dict: dict = { "replay_id": replay_id, "datetime": date, "playlist": playlist, "match_type": match_type, "match_result": "W" if match_won else "L", "team_goals": goals_for, "opp_goals": goals_against }
-    result_dict: dict = base_dict | stat_dict | movement_dict | boost_dict
+    positioning_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["positioning"]
+    base_dict: dict = { "replay_id": replay_id, "datetime": date, "platform": platform, "car_name": car_name,  "playlist": playlist, "match_type": match_type, "match_result": "W" if match_won else "L", "team_goals": goals_for, "opp_goals": goals_against }
+    result_dict: dict = base_dict | stat_dict | movement_dict | boost_dict | positioning_dict
 
     resultant_frame = pd.DataFrame([result_dict])
 
