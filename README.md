@@ -1,4 +1,11 @@
-# rocket-league-scouting
+# Rocket League Scouting Tool Project
+
+## Table of Contents
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Screenshots](#screenshots)
+- [Instructions](#instructions)
+- [Roadmap](#roadmap)
 
 ## OVERVIEW
 An end-to-end data engineering project that ingests Rocket League match data from the Ballchasing API, transforms it into analytics-ready datasets using Python and DuckDB, and serves interactive scouting dashboards through Streamlit.
