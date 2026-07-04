@@ -3,6 +3,8 @@
 ## OVERVIEW
 An end-to-end data engineering project that ingests Rocket League match data from the Ballchasing API, transforms it into analytics-ready datasets using Python and DuckDB, and serves interactive scouting dashboards through Streamlit.
 
+Current Status: Active development. Core ingestion, transformation, and analytics functionality are complete. Current work focuses on performance improvements, additional visualizations, and production-readiness.
+
 ## ARCHITECTURE
 Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Locally-Saved CSV  &rarr; Pandas Data Cleaning &rarr; DuckDB Transformations &rarr; Analytics-Ready Tables &rarr; Streamlit Dashboard &rarr; Player Performance Analysis
 
@@ -38,7 +40,8 @@ Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Locall
 ### STEP 4: Profit
 You may now analyze player performances much easier than before and maintain historical records of player performances across time. Woo-hoo!
 
-## FUTURE FEATURES
+## ROADMAP
 1. Add functionality to upload a CSV or similar with player names and game counts to ingest a large amount of data at once.
 2. Add further options for filtering by playlist type (private, public) and rank for competitive games (see how players perform in their Champ lobbies vs Diamond lobbies, and so on).
 3. Reformat analytics reports to be more eye-friendly.
+4. Containerize application with Docker.

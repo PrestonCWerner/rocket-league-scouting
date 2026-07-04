@@ -8,6 +8,3 @@ pg = st.navigation([home_page, analytics_page])
 
 # Run the selected page
 pg.run()
-
-if st.button("Clear Cache"):
-    st.cache_data.clear()

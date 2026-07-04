@@ -3,6 +3,9 @@ from utils.player_replay_ingestion import ingest_data
 
 if __name__ == "__main__":
     st.set_page_config(layout = "centered")
+    with st.sidebar:
+        if st.button("Clear Cache"):
+            st.cache_data.clear()
     with st.container():
         st.title("Ballchasing Data Ingestion", text_alignment = "center")
         st.space(size = "large")
