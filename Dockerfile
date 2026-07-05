@@ -1,15 +1,15 @@
-# rocket-league-scouting/Dockerfile
+# app/Dockerfile
 
 FROM python:3.12-slim
 
-WORKDIR /rocket-league-scouting
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
+RUN  apt-get update && apt-get install -y \
     build-essential \
     curl \
-    software-properties-common \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+    git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/PrestonCWerner/rocket-league-scouting .
 
