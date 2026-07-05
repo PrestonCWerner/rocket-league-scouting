@@ -241,7 +241,61 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
 
         # 4. Render in Streamlit
         st.altair_chart(chart, use_container_width=True)
-       
+
+def filter_db() -> pd.DataFrame:
+    with st.container():
+            subhead_col = st.columns(1)[0]
+            game_type_col, car_type_col, game_count_col = st.columns(3)
+
+            # This allows global filtering by game type (1v1, 2v2, 3v3, 4v4)
+            with game_type_col:
+                game_type = st.radio(
+                    label = "**FILTER BY GAME TYPE**",
+                    options = ["All", "1v1", "2v2", "3v3", "4v4"],
+                    horizontal = True
+                )
+
+                st.session_state["game_type"] = game_type
+
+            # This radio allows global filtering on car type
+            with car_type_col:
+                car_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
+                car_type = st.radio(
+                    label = "**FILTER BY CAR**",
+                    options = car_list,
+                    horizontal = True
+                )
+            
+            with game_count_col:
+                 game_count_picker = st.selectbox(
+                    label = "**FILTER BY GAME COUNT**",
+                    options = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)],
+                    index = len(st.session_state["df_dict"][df_picker])-1
+                )
+
+            with subhead_col:
+                cur_player_name = df_picker
+                cur_game_count = game_count_picker
+                st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{cur_player_name}] for the last :green[{cur_game_count}] games.", text_alignment = "center")
+    
+    # Create query to filter the data based on the game type chose in the radio widget
+    game_dict_converter:dict = {"All": "", "1v1": "AND match_type = 1", "2v2": "AND match_type = 2", "3v3": "AND match_type = 3", "4v4": "AND match_type = 4"}
+    car_filter: str = "" if car_type == "All" else f"AND car_name = '{car_type}'"
+
+    game_type_filter_query = f"""
+        SELECT
+            *
+        FROM cur_df
+        WHERE 1 = 1
+        {game_dict_converter[game_type]}
+        {car_filter}
+    """
+
+    filtered_df = duckdb.sql(game_type_filter_query).df()
+    filtered_df.drop(columns="index", inplace=True)
+    filtered_df = filtered_df.sort_values(by = "datetime", ascending = False).head(cur_game_count)
+
+    return filtered_df
 
 if __name__ == "__main__":
     # If 'player_csvs/' is empty, return error message
@@ -262,66 +316,11 @@ if __name__ == "__main__":
 
         duckdb.register("cur_df", st.session_state["df_dict"][df_picker])
 
-        # Create dataframe from raw csv based on the currently chosen CSV file name in the sidebar tool
-        #cur_df: pd.DataFrame = load_data(st.session_state["df_dict"][""]
-        # Drop unneccessary index column
-        #cur_df.drop(columns = "index", inplace = True)
-
-        # Create subheader container with subheader and game_type filter
-        with st.container():
-            subhead_col = st.columns(1)[0]
-            game_type_col, car_type_col, game_count_col = st.columns(3)
-
-            # This allows global filtering by game type (1v1, 2v2, 3v3, 4v4)
-            with game_type_col:
-                game_type = st.radio(
-                    label = "**FILTER BY GAME TYPE**",
-                    options = ["All", "1v1", "2v2", "3v3", "4v4"],
-                    horizontal = True
-                )
-
-            # This radio allows global filtering on car type
-            with car_type_col:
-                car_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
-                car_type = st.radio(
-                    label = "**FILTER BY CAR**",
-                    options = car_list,
-                    horizontal = True
-                )
-            
-            with game_count_col:
-                 game_count_picker = st.selectbox(
-                    label = "**FILTER BY GAME COUNT**",
-                    options = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)],
-                    index = len(st.session_state["df_dict"][df_picker])-1
-                )
-
-            with subhead_col:
-                cur_player_name = df_picker.split("_")[0]
-                cur_game_count = game_count_picker
-                st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{cur_player_name}] for the last :green[{cur_game_count}] games.", text_alignment = "center")
-
-        
-        # Create query to filter the data based on the game type chose in the radio widget
-        game_dict_converter:dict = {"All": "", "1v1": "AND match_type = 1", "2v2": "AND match_type = 2", "3v3": "AND match_type = 3", "4v4": "AND match_type = 4"}
-        car_filter: str = "" if car_type == "All" else f"AND car_name = '{car_type}'"
-
-        game_type_filter_query = f"""
-            SELECT
-                *
-            FROM cur_df
-            WHERE 1 = 1
-            {game_dict_converter[game_type]}
-            {car_filter}
-        """
-
-        filtered_df = duckdb.sql(game_type_filter_query).df()
-        filtered_df.drop(columns="index", inplace=True)
-        filtered_df = filtered_df.sort_values(by = "datetime", ascending = False).head(cur_game_count)
+        filtered_df = filter_db()
 
         # If the filtered dataset is empty, alert user that the player has no games of that game type recorded in the provided dataset.
         if len(filtered_df) == 0:
-            st.title(f"There are no games recorded for :red[{game_type}]. Please try a different game mode.")
+            st.title(f"There are no games recorded for :red[{st.session_state["game_type"]}]. Please try a different game mode.")
         else:
             # Create tabular navigation to compartmentalize key, distinctive statistics: Core stats, Movement stats, and Boost stats.
             core_tab, movement_tab, boost_tab, positioning_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**", "**:yellow[POSITIONING]**"])
