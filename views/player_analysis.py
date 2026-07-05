@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import duckdb
 import datetime
+import altair as alt
 from pathlib import Path
 
 @st.cache_data
@@ -226,7 +227,20 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
 
     with st.container():
         st.subheader("Wins and Losses over Time", text_alignment = "center")
-        st.bar_chart(win_loss_df, x = "date", y = "game_count", color = "match_result", stack = True)
+
+        color_scale = alt.Scale(
+            domain=["W", "L"],
+            range=['#2ecc71', '#e74c3c']  # True = Green, False = Red
+        )
+
+        chart = alt.Chart(win_loss_df).mark_bar().encode(
+            x= alt.X('date:N', axis=alt.Axis(labelAngle=-45)),
+            y= alt.Y('game_count:Q', title = "Game Count", axis=alt.Axis(tickMinStep=1)),
+            color=alt.Color('match_result:N', scale=color_scale, title='Match Result')
+        )
+
+        # 4. Render in Streamlit
+        st.altair_chart(chart, use_container_width=True)
        
 
 if __name__ == "__main__":

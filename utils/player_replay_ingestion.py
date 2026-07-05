@@ -60,6 +60,7 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
     opponent_team: str = None
     goals_for: int = None
     goals_against: int = None
+    rank: str = None
 
     for index, player in enumerate(replay_json["blue"]["players"]):
         if player["name"] == player_name:
@@ -78,44 +79,53 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
     
     if player_team is None:
         return pd.DataFrame({})
+    
+    if "rank" in replay_json[player_team]["players"][player_index].keys():
+        rank = replay_json[player_team]["players"][player_index]["rank"]["id"].split("-")[0]
 
-    platform: str = replay_json[player_team]["players"][player_index]["id"]["platform"]
-    car_name: str = replay_json[player_team]["players"][player_index]["car_name"]
+    try:
+        platform: str = replay_json[player_team]["players"][player_index]["id"]["platform"]
+        car_name: str = replay_json[player_team]["players"][player_index]["car_name"]
+   
 
     
-    goals_for = team_goals[player_team]
-    goals_against = team_goals[opponent_team]
+        goals_for = team_goals[player_team]
+        goals_against = team_goals[opponent_team]
 
-    if player_team == "orange":
-        if team_goals["orange"] > team_goals["blue"]:
-            match_won = True
-    elif player_team == "blue":
-        if team_goals["blue"] > team_goals["orange"]:
-            match_won = True
-    
-    stat_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["core"]
-    movement_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["movement"]
-    boost_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["boost"]
-    positioning_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["positioning"]
-    base_dict: dict = { "replay_id": replay_id, "datetime": date, "platform": platform, "car_name": car_name,  "playlist": playlist, "match_type": match_type, "match_result": "W" if match_won else "L", "team_goals": goals_for, "opp_goals": goals_against }
-    result_dict: dict = base_dict | stat_dict | movement_dict | boost_dict | positioning_dict
+        if player_team == "orange":
+            if team_goals["orange"] > team_goals["blue"]:
+                match_won = True
+        elif player_team == "blue":
+            if team_goals["blue"] > team_goals["orange"]:
+                match_won = True
+        
+        stat_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["core"]
+        movement_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["movement"]
+        boost_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["boost"]
+        positioning_dict: dict = replay_json[player_team]["players"][player_index]["stats"]["positioning"]
+        base_dict: dict = { "replay_id": replay_id, "datetime": date, "platform": platform, "car_name": car_name,  "playlist": playlist, "match_type": match_type, "rank": "unranked" if rank is None else rank, "match_result": "W" if match_won else "L", "team_goals": goals_for, "opp_goals": goals_against }
+        result_dict: dict = base_dict | stat_dict | movement_dict | boost_dict | positioning_dict
 
-    resultant_frame = pd.DataFrame([result_dict])
+        resultant_frame = pd.DataFrame([result_dict])
 
-    resultant_frame = resultant_frame.astype({
-        "playlist": str,
-        "match_type": str,
-        "match_result": str,
-        "shots": int,
-        "shots_against": int,
-        "saves": int,
-        "assists": int,
-        "score": int, 
-        "mvp": bool, 
-        "shooting_percentage": float
-    })
+        resultant_frame = resultant_frame.astype({
+            "playlist": str,
+            "match_type": str,
+            "match_result": str,
+            "shots": int,
+            "shots_against": int,
+            "saves": int,
+            "assists": int,
+            "score": int, 
+            "mvp": bool, 
+            "shooting_percentage": float
+        })
 
-    return resultant_frame
+        return resultant_frame
+
+    except KeyError as e:
+        logger.info(f"Attempting to ingest replay id: {replay_id}")
+        logger.error(f"Key Error: {e}")
 
     
 
@@ -129,7 +139,7 @@ def get_raw_data(player_name: str, game_count: int, api_auth_key: str) -> pd.Dat
 
     try:
         # Get replays overview data
-        replays_overview_data = requests.get("https://ballchasing.com/api/replays" + f"?player-name={player_name}&count={game_count}", headers = AUTH_HEADER)
+        replays_overview_data = requests.get("https://ballchasing.com/api/replays" + f'?player-name="{player_name}"&count={game_count}', headers = AUTH_HEADER)
 
 
         if not replays_overview_data.json()['list']:

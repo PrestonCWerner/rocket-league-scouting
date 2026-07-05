@@ -2,13 +2,6 @@ import requests
 import pandas as pd
 
 if __name__ == "__main__":
-    player_name = "John"
-    game_count = "1"
-    req = requests.get("https://ballchasing.com/api/replays" + f"?player-name={player_name}&count={game_count}", headers = {"Authorization": "sXipbcDg9SexNWpqktZ6syDBh3Cj0WJNe4tX0JGk"})
-
-    for replay in req.json()['list']:
-            replay_data = requests.get("https://ballchasing.com/api/replays" + f"/{replay["id"]}", headers = {"Authorization": "sXipbcDg9SexNWpqktZ6syDBh3Cj0WJNe4tX0JGk"})
-            print(replay["orange"]["players"][2]["id"]["platform"])
-            for index, player in enumerate(replay["orange"]["players"]):
-                print(player["name"])
-                print(index)
+    replay_data = requests.get("https://ballchasing.com/api/replays/e9c65df6-9d8a-49e8-a4c3-5a2295e5f083", headers = {"Authorization": "sXipbcDg9SexNWpqktZ6syDBh3Cj0WJNe4tX0JGk"})
+    print(replay_data.json()["blue"]["players"][2])
+    print(replay_data.status_code)
