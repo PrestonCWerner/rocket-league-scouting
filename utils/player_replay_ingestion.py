@@ -50,7 +50,7 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
     # Returns Data Frame with single row representing game stats
 
     replay_id: str = replay_json["id"]
-    playlist: str = replay_json["match_type"]
+    playlist: str = replay_json["playlist_id"]
     match_type: str = replay_json["team_size"]
     date = pd.to_datetime(replay_json["date"])
     

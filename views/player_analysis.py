@@ -33,17 +33,17 @@ def show_positioning_data(raw_data: pd.DataFrame) -> None:
                 AVG(avg_distance_to_ball_possession)::DECIMAL(6,2) AS avg_distance_to_ball_possession,
                 AVG(avg_distance_to_ball_no_possession)::DECIMAL(6,2) AS avg_distance_to_ball_no_possession,
                 AVG(avg_distance_to_mates)::DECIMAL(6,2) AS avg_distance_to_mates,
-                AVG(percent_defensive_third)::DECIMAL(4,2) AS avg_pct_def_third,
-                AVG(percent_offensive_third)::DECIMAL(4,2) AS avg_pct_off_third,
-                AVG(percent_neutral_third )::DECIMAL(4,2) AS avg_pct_neu_third,
-                AVG(percent_defensive_half)::DECIMAL(4,2)  AS avg_pct_def_half,
-                AVG(percent_offensive_half)::DECIMAL(4,2)  AS avg_pct_off_half,
-                AVG(percent_behind_ball)::DECIMAL(4,2)  AS avg_pct_behind_ball,
-                AVG(percent_infront_ball)::DECIMAL(4,2)  AS avg_pct_infront_ball,
-                AVG(percent_most_back)::DECIMAL(4,2)  AS avg_pct_most_back,
-                AVG(percent_most_forward)::DECIMAL(4,2)  AS avg_pct_most_forward,
-                AVG(percent_closest_to_ball)::DECIMAL(4,2)  AS avg_pct_closest_to_ball,
-                AVG(percent_farthest_from_ball)::DECIMAL(4,2)  AS avg_pct_farthest_from_ball
+                AVG(percent_defensive_third)::DECIMAL(5,2) AS avg_pct_def_third,
+                AVG(percent_offensive_third)::DECIMAL(5,2) AS avg_pct_off_third,
+                AVG(percent_neutral_third )::DECIMAL(5,2) AS avg_pct_neu_third,
+                AVG(percent_defensive_half)::DECIMAL(5,2)  AS avg_pct_def_half,
+                AVG(percent_offensive_half)::DECIMAL(5,2)  AS avg_pct_off_half,
+                AVG(percent_behind_ball)::DECIMAL(5,2)  AS avg_pct_behind_ball,
+                AVG(percent_infront_ball)::DECIMAL(5,2)  AS avg_pct_infront_ball,
+                AVG(percent_most_back)::DECIMAL(5,2)  AS avg_pct_most_back,
+                AVG(percent_most_forward)::DECIMAL(5,2)  AS avg_pct_most_forward,
+                AVG(percent_closest_to_ball)::DECIMAL(5,2)  AS avg_pct_closest_to_ball,
+                AVG(percent_farthest_from_ball)::DECIMAL(5,2) AS avg_pct_farthest_from_ball
             FROM raw_data
         """
 
@@ -89,9 +89,9 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
                 AVG(saves)::DECIMAL(4,2) AS avg_saves, 
                 AVG(score)::DECIMAL(6,2) AS avg_score, 
                 AVG(shots)::DECIMAL(4, 2) AS avg_shots, 
-                AVG(shooting_percentage)::DECIMAL(4,2) AS avg_shooting_pct,
-                AVG(shots_against)::DECIMAL(4,2) AS avg_shots_against,
-                AVG(goals_against)::DECIMAL(4,2) AS avg_goals_against
+                AVG(shooting_percentage)::DECIMAL(5,2) AS avg_shooting_pct,
+                AVG(shots_against)::DECIMAL(5,2) AS avg_shots_against,
+                AVG(goals_against)::DECIMAL(5,2) AS avg_goals_against
             FROM raw_data"""
         avg_df = duckdb.sql(avg_query).df()
 
@@ -242,10 +242,11 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
         # 4. Render in Streamlit
         st.altair_chart(chart, use_container_width=True)
 
-def filter_db() -> pd.DataFrame:
+# Filter database based off of number of games, game type, and car type
+def filter_df() -> pd.DataFrame:
     with st.container():
             subhead_col = st.columns(1)[0]
-            game_type_col, car_type_col, game_count_col = st.columns(3)
+            game_type_col, car_type_col, playlist_col, game_count_col = st.columns(4)
 
             # This allows global filtering by game type (1v1, 2v2, 3v3, 4v4)
             with game_type_col:
@@ -259,41 +260,61 @@ def filter_db() -> pd.DataFrame:
 
             # This radio allows global filtering on car type
             with car_type_col:
-                car_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
+                car_list = ["Any"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
                 car_type = st.radio(
                     label = "**FILTER BY CAR**",
                     options = car_list,
                     horizontal = True
                 )
+
+                st.session_state["car_type"] = car_type
+            
+            with playlist_col:
+                playlist_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "playlist", ascending = True)["playlist"].unique().tolist()
+                playlist_type = st.radio(
+                    label = "**FILTER BY PLAYLIST**",
+                    options = playlist_list,
+                    horizontal = True
+                )
+
+                st.session_state["playlist"] = playlist_type
             
             with game_count_col:
-                 game_count_picker = st.selectbox(
+                game_count_list = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)]
+                game_count_picker = st.selectbox(
                     label = "**FILTER BY GAME COUNT**",
-                    options = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)],
+                    options = game_count_list,
                     index = len(st.session_state["df_dict"][df_picker])-1
                 )
 
+                st.session_state["game_count"] = game_count_picker
+
+
+            # Create query to filter the data based on the game type chose in the radio widget
+            game_dict_converter:dict = {"All": "", "1v1": "AND match_type = 1", "2v2": "AND match_type = 2", "3v3": "AND match_type = 3", "4v4": "AND match_type = 4"}
+            car_filter: str = "" if car_type == "Any" else f"AND car_name = '{car_type}'"
+            playlist_filter: str = "" if playlist_type == "All" else f"AND playlist = '{playlist_type}'"
+
+            game_type_filter_query = f"""
+                SELECT
+                    *
+                FROM cur_df
+                WHERE 1 = 1
+                {game_dict_converter[game_type]}
+                {car_filter}
+                {playlist_filter}
+            """
+
+            filtered_df = duckdb.sql(game_type_filter_query).df()
+            filtered_df.drop(columns="index", inplace=True)
+            filtered_df = filtered_df.sort_values(by = "datetime", ascending = False).head(game_count_picker)
+            st.session_state["filtered_df"] = filtered_df
+
+
             with subhead_col:
-                cur_player_name = df_picker
-                cur_game_count = game_count_picker
-                st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{cur_player_name}] for the last :green[{cur_game_count}] games.", text_alignment = "center")
+                st.subheader(f"Currently viewing :green[{st.session_state["game_type"]}] stats for :green[{df_picker}] for the last :green[{len(filtered_df)}] games.", text_alignment = "center")
     
-    # Create query to filter the data based on the game type chose in the radio widget
-    game_dict_converter:dict = {"All": "", "1v1": "AND match_type = 1", "2v2": "AND match_type = 2", "3v3": "AND match_type = 3", "4v4": "AND match_type = 4"}
-    car_filter: str = "" if car_type == "All" else f"AND car_name = '{car_type}'"
-
-    game_type_filter_query = f"""
-        SELECT
-            *
-        FROM cur_df
-        WHERE 1 = 1
-        {game_dict_converter[game_type]}
-        {car_filter}
-    """
-
-    filtered_df = duckdb.sql(game_type_filter_query).df()
-    filtered_df.drop(columns="index", inplace=True)
-    filtered_df = filtered_df.sort_values(by = "datetime", ascending = False).head(cur_game_count)
+    
 
     return filtered_df
 
@@ -316,11 +337,11 @@ if __name__ == "__main__":
 
         duckdb.register("cur_df", st.session_state["df_dict"][df_picker])
 
-        filtered_df = filter_db()
+        filtered_df = filter_df()
 
         # If the filtered dataset is empty, alert user that the player has no games of that game type recorded in the provided dataset.
         if len(filtered_df) == 0:
-            st.title(f"There are no games recorded for :red[{st.session_state["game_type"]}]. Please try a different game mode.")
+            st.title(f"There are no games recorded for :red[{st.session_state["game_type"]}] game mode using :red[{st.session_state["car_type"]}] car in the last :red[{st.session_state["game_count"]}] games. Please try a different game mode, car, and/or number of games.")
         else:
             # Create tabular navigation to compartmentalize key, distinctive statistics: Core stats, Movement stats, and Boost stats.
             core_tab, movement_tab, boost_tab, positioning_tab = st.tabs(["**:green[CORE]**", "**:blue[MOVEMENT]**", "**:orange[BOOST]**", "**:yellow[POSITIONING]**"])
