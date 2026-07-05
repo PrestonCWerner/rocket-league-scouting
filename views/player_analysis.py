@@ -256,26 +256,34 @@ if __name__ == "__main__":
         # Create subheader container with subheader and game_type filter
         with st.container():
             subhead_col = st.columns(1)[0]
-            game_type_col = st.columns(1)[0]
+            game_type_col, car_type_col, game_count_col = st.columns(3)
 
             # This allows global filtering by game type (1v1, 2v2, 3v3, 4v4)
             with game_type_col:
                 game_type = st.radio(
-                    "**FILTER BY GAME TYPE**",
-                    ["All", "1v1", "2v2", "3v3", "4v4"],
+                    label = "**FILTER BY GAME TYPE**",
+                    options = ["All", "1v1", "2v2", "3v3", "4v4"],
                     horizontal = True
                 )
 
+            # This radio allows global filtering on car type
+            with car_type_col:
                 car_list = ["All"] + st.session_state["df_dict"][df_picker].sort_values(by = "car_name", ascending = True)["car_name"].unique().tolist()
                 car_type = st.radio(
-                    "**FILTER BY CAR**",
-                    car_list,
+                    label = "**FILTER BY CAR**",
+                    options = car_list,
                     horizontal = True
+                )
+            
+            with game_count_col:
+                 game_count_picker = st.selectbox(
+                    label = "**FILTER BY GAME COUNT**",
+                    options = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)]
                 )
 
             with subhead_col:
                 cur_player_name = df_picker.split("_")[0]
-                cur_game_count = len(st.session_state["df_dict"][df_picker])
+                cur_game_count = game_count_picker
                 st.subheader(f"Currently viewing :green[{game_type}] stats for :green[{cur_player_name}] for the last :green[{cur_game_count}] games.", text_alignment = "center")
 
         
@@ -294,6 +302,7 @@ if __name__ == "__main__":
 
         filtered_df = duckdb.sql(game_type_filter_query).df()
         filtered_df.drop(columns="index", inplace=True)
+        filtered_df = filtered_df.sort_values(by = "datetime", ascending = False).head(cur_game_count)
 
         # If the filtered dataset is empty, alert user that the player has no games of that game type recorded in the provided dataset.
         if len(filtered_df) == 0:

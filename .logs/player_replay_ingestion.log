@@ -1,10 +1,2 @@
-INFO: at 2026-07-04 21:53:52 on line 38 in player_replay_ingestion.py: Logger initiated successfully.
-INFO: at 2026-07-04 21:54:06 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:11 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:18 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:19 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:22 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:23 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:24 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:27 on line 160 in player_replay_ingestion.py: One team went goalless.
-INFO: at 2026-07-04 21:54:46 on line 160 in player_replay_ingestion.py: One team went goalless.
+INFO: at 2026-07-05 14:28:48 on line 38 in player_replay_ingestion.py: Logger initiated successfully.
+INFO: at 2026-07-05 14:29:01 on line 160 in player_replay_ingestion.py: One team went goalless.
