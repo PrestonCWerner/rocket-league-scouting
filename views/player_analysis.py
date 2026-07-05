@@ -278,7 +278,8 @@ if __name__ == "__main__":
             with game_count_col:
                  game_count_picker = st.selectbox(
                     label = "**FILTER BY GAME COUNT**",
-                    options = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)]
+                    options = [i for i in range(1, len(st.session_state["df_dict"][df_picker]) + 1)],
+                    index = len(st.session_state["df_dict"][df_picker])-1
                 )
 
             with subhead_col:
