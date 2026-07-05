@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
             with st.form(key="player_info_form", clear_on_submit=True):
                 player_name: int = st.text_input(label = "**ENTER PLAYER NAME**", value="", placeholder = "John Doe", max_chars = 32, width = 200)
-                game_count: int = st.number_input(label = "**ENTER NUMBER OF GAMES**", value=None, placeholder = "(Between 1 and 50)", min_value = 1, max_value = 200, width = 200)
+                game_count: int = st.number_input(label = "**ENTER NUMBER OF GAMES**", value=None, placeholder = "(Between 1 and 200)", min_value = 1, max_value = 200, width = 200)
 
                 submit_button = st.form_submit_button(label="Submit")
 

@@ -28,21 +28,21 @@ def show_positioning_data(raw_data: pd.DataFrame) -> None:
 
         avg_query = """
             SELECT
-                AVG(avg_distance_to_ball) AS avg_distance_to_ball,
-                AVG(avg_distance_to_ball_possession) AS avg_distance_to_ball_possession,
-                AVG(avg_distance_to_ball_no_possession) AS avg_distance_to_ball_no_possession,
-                AVG(avg_distance_to_mates) AS avg_distance_to_mates,
-                AVG(percent_defensive_third) AS avg_pct_def_third,
-                AVG(percent_offensive_third) AS avg_pct_off_third,
-                AVG(percent_neutral_third ) AS avg_pct_neu_third,
-                AVG(percent_defensive_half) AS avg_pct_def_half,
-                AVG(percent_offensive_half) AS avg_pct_off_half,
-                AVG(percent_behind_ball) AS avg_pct_behind_ball,
-                AVG(percent_infront_ball) AS avg_pct_infront_ball,
-                AVG(percent_most_back) AS avg_pct_most_back,
-                AVG(percent_most_forward) AS avg_pct_most_forward,
-                AVG(percent_closest_to_ball) AS avg_pct_closest_to_ball,
-                AVG(percent_farthest_from_ball) AS avg_pct_farthest_from_ball
+                AVG(avg_distance_to_ball)::DECIMAL(6,2) AS avg_distance_to_ball,
+                AVG(avg_distance_to_ball_possession)::DECIMAL(6,2) AS avg_distance_to_ball_possession,
+                AVG(avg_distance_to_ball_no_possession)::DECIMAL(6,2) AS avg_distance_to_ball_no_possession,
+                AVG(avg_distance_to_mates)::DECIMAL(6,2) AS avg_distance_to_mates,
+                AVG(percent_defensive_third)::DECIMAL(4,2) AS avg_pct_def_third,
+                AVG(percent_offensive_third)::DECIMAL(4,2) AS avg_pct_off_third,
+                AVG(percent_neutral_third )::DECIMAL(4,2) AS avg_pct_neu_third,
+                AVG(percent_defensive_half)::DECIMAL(4,2)  AS avg_pct_def_half,
+                AVG(percent_offensive_half)::DECIMAL(4,2)  AS avg_pct_off_half,
+                AVG(percent_behind_ball)::DECIMAL(4,2)  AS avg_pct_behind_ball,
+                AVG(percent_infront_ball)::DECIMAL(4,2)  AS avg_pct_infront_ball,
+                AVG(percent_most_back)::DECIMAL(4,2)  AS avg_pct_most_back,
+                AVG(percent_most_forward)::DECIMAL(4,2)  AS avg_pct_most_forward,
+                AVG(percent_closest_to_ball)::DECIMAL(4,2)  AS avg_pct_closest_to_ball,
+                AVG(percent_farthest_from_ball)::DECIMAL(4,2)  AS avg_pct_farthest_from_ball
             FROM raw_data
         """
 
