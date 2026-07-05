@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import requests
+import time
 from utils.player_replay_ingestion import ingest_data
 
 @st.dialog("Ballchasing API Auth Key Submission", dismissible = False)
@@ -39,7 +41,38 @@ def set_api_auth_key() -> None:
         
         if close_window_button:
             st.rerun()
-    
+
+@st.dialog("Overwrite Existing Data?", dismissible = False)
+def overwrite_popup(player_name: str, game_count: int) -> bool:
+    with st.form(key="overwrite_submission"):
+        overwrite_choice = st.selectbox(
+            label = f"** A dataframe already exists for player {player_name}. Would you like to overwrite the existing dataframe? **",
+            options = [f"Overwrite data for {player_name}", f"Do not overwrite data for {player_name}"]
+        )
+        check = st.form_submit_button(label="Confirm")
+
+        if check:
+            if overwrite_choice == f"Overwrite data for {player_name}":
+                st.success(f"Form submitted successfully. Pulling {player_name}'s Ballchasing data from the last {game_count} games!")
+                add_df_to_list(player_name, game_count)
+                time.sleep(5)
+                st.rerun()
+            else:
+                st.success(f"Keeping existing data for {player_name}.")
+                time.sleep(5)
+                st.rerun()
+
+def add_df_to_list(player_name: str, game_count: int):
+    with st.spinner("Loading data..."):
+        new_df: pd.DataFrame = ingest_data(player_name, game_count, st.session_state["api_key"])
+        if "error" in new_df.columns:
+            st.error(f"Last {game_count} games for player '{player_name}' could not be found.")
+        else:
+            new_df.sort_values(by="datetime", ascending = True, inplace=True)
+            st.session_state["df_manifest"].append(f"{player_name}")
+            st.session_state["df_dict"][f"{player_name}"] = new_df
+            st.success(f"Successfully loaded data into DataFrame list.")
+
 
 if __name__ == "__main__":
     st.set_page_config(layout = "centered")
@@ -66,20 +99,14 @@ if __name__ == "__main__":
                     st.error(f"'{player_name}' must be comprised of alpha-numeric characters.")
                 elif game_count is None:
                     st.error("Game count must not be null.")
-                elif player_name + "_" + str(game_count) in st.session_state["df_manifest"]:
-                    st.error(f"DataFrame already exists for player {player_name}'s last {game_count} games.")
-                    df_exists = True         
                 else:
-                    st.success(f"Form submitted successfully. Pulling {player_name}'s Ballchasing data from the last {game_count} games!")
-                    with st.spinner("Loading data..."):
-                        new_df: pd.DataFrame = ingest_data(player_name, game_count, st.session_state["api_key"])
-                        if "error" in new_df.columns:
-                            st.error(f"Last {game_count} games for player '{player_name}' could not be found.")
-                        else:
-                            new_df.sort_values(by="datetime", ascending = True, inplace=True)
-                            st.session_state["df_manifest"].append(f"{player_name}_{game_count}")
-                            st.session_state["df_dict"][f"{player_name}_{game_count}"] = new_df
-                            st.success(f"Successfully loaded data into DataFrame list.")
+                    if player_name in st.session_state["df_manifest"]:
+                        overwrite_popup(player_name, game_count)
+                    else:
+                        st.success(f"Form submitted successfully. Pulling {player_name}'s Ballchasing data from the last {game_count} games!")
+                        add_df_to_list(player_name, game_count)
+                        
+                            
                     
                     
     else:
