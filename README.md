@@ -13,7 +13,7 @@ An end-to-end data engineering project that ingests Rocket League match data fro
 Current Status: Active development. Core ingestion, transformation, and analytics functionality are complete. Current work focuses on performance improvements, additional visualizations, and production-readiness.
 
 ## ARCHITECTURE
-Ballchasing API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; Locally-Saved CSV  &rarr; Pandas Data Cleaning &rarr; DuckDB Transformations &rarr; Analytics-Ready Tables &rarr; Streamlit Dashboard &rarr; Player Performance Analysis
+Ballchasing REST API &rarr; Python Data Ingestion &rarr; Raw Match Data &rarr; DuckDB Transformations &rarr; Analytics-Ready Tables &rarr; Streamlit Dashboard &rarr; Player Performance Analysis
 
 ## SCREENSHOTS
 
