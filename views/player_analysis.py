@@ -19,7 +19,6 @@ def show_data(raw_data: pd.DataFrame) -> None:
 @st.cache_data
 def show_positioning_data(raw_data: pd.DataFrame) -> None:
     with st.container():
-        st.subheader("Positioning Statistics", text_alignment = "center")
 
         adtb_col, adtbp_col, adtbnp_col, adtm_col = st.columns(4)
         apdt_col,apnt_col, apot_col, apdh_col, apoh_col = st.columns(5)
