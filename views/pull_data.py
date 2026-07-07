@@ -6,6 +6,8 @@ from utils.player_replay_ingestion import ingest_data
 
 @st.dialog("Ballchasing API Auth Key Submission", dismissible = False)
 def set_api_auth_key() -> None:
+    """ Generates a form for inputting user's API Auth key. """
+
     with st.form(key="api_key_submission", clear_on_submit=True):
         api_auth_key: str = st.text_input(label = "**ENTER AUTH KEY**", value=None, placeholder = "ABCDEFGHI12345678", type = "password", max_chars = 40, width = 200)
         submit_button = st.form_submit_button(label="Submit")
@@ -44,6 +46,8 @@ def set_api_auth_key() -> None:
 
 @st.dialog("Overwrite Existing Data?", dismissible = False)
 def overwrite_popup(player_name: str, game_count: int) -> bool:
+    """ Generates overwrite pop-up when user requests new data for existing player. """
+
     with st.form(key="overwrite_submission"):
         overwrite_choice = st.selectbox(
             label = f"** A dataframe already exists for player {player_name}. Would you like to overwrite the existing dataframe? **",
@@ -63,6 +67,7 @@ def overwrite_popup(player_name: str, game_count: int) -> bool:
                 st.rerun()
 
 def add_df_to_list(player_name: str, game_count: int):
+    """ Creates DataFrame from ingested data based on player_name and game_count, then places DataFrame in DataFrame manifest and dictionary."""
     with st.spinner("Loading data..."):
         new_df: pd.DataFrame = ingest_data(player_name, game_count, st.session_state["api_key"])
         if "error" in new_df.columns:
@@ -75,6 +80,8 @@ def add_df_to_list(player_name: str, game_count: int):
 
 
 if __name__ == "__main__":
+    """ Generates data ingestion page. """
+
     st.set_page_config(layout = "centered")
     with st.sidebar:
         if st.button("Clear Cache"):
@@ -104,11 +111,7 @@ if __name__ == "__main__":
                         overwrite_popup(player_name, game_count)
                     else:
                         st.success(f"Form submitted successfully. Pulling {player_name}'s Ballchasing data from the last {game_count} games!")
-                        add_df_to_list(player_name, game_count)
-                        
-                            
-                    
-                    
+                        add_df_to_list(player_name, game_count)                
     else:
         st.title("Please add a Ballchasing API Authentication Key to use this Scouting Tool. Visit https://ballchasing.com/upload to find your key.")
 

@@ -11,6 +11,9 @@ logger = logging.getLogger("player_replay_ingestion.py")
 logger.setLevel(logging.DEBUG)
 
 def initiate_logger() -> None:
+    """ Initates logger to write to ./.logs/player_replay_ingestion.log """
+
+    
     # Clear logger handlers, if any exist
     logger.handlers.clear()
     
@@ -39,6 +42,7 @@ def initiate_logger() -> None:
    
 
 def verify_raw_source_data(raw_source: pd.DataFrame) -> bool:
+    """ Verify that data types match expected data types, data is in expected range, etc. """
     #TODO: add assertions and such for data validation
     assert (raw_source['goals'] <= 10).all(), logger.DEBUG("Expected goals above range")
 
@@ -46,8 +50,13 @@ def verify_raw_source_data(raw_source: pd.DataFrame) -> bool:
     
 
 def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dict) -> pd.DataFrame:
-    # Parses individual game stats
-    # Returns Data Frame with single row representing game stats
+    """ Parses data from individual replay JSON.
+    
+    Takes the JSON data from the replay request, name of the player to search for, and the team_goals JSON, which contains the goals scored for both teams. Iterates through both teams to find the team that the player is on.
+    Various data is taken from replay_json to populate dictionaries, which are then combined, transformed into a dataframe, and data types are explicitly asserted on the data.
+
+    """
+
 
     replay_id: str = replay_json["id"]
     playlist: str = replay_json["playlist_id"]
@@ -130,8 +139,12 @@ def parse_player_match_info(replay_json: dict, player_name: str, team_goals: dic
     
 
 def get_raw_data(player_name: str, game_count: int, api_auth_key: str) -> pd.DataFrame:
-    # Ingests raw data into a Data Frame for transformation at a later step.
-    # Output is a Data Frame where each row is an individual game performance by the selected player.
+    """ Ingests data from the Nth (game_count) most recent games and transforms it into a DataFrame.
+
+    Request is made to the ballchasing.com API for data related to the player_name and their game_count last matches uploaded. The initial request will return a list of replays up to game_count.
+    Once the list is acquired, it is iterated through to get data from each replay individually and concatenate the data to an existing DataFrame. 
+    
+    """
 
     AUTH_HEADER = {"Authorization": api_auth_key}
 
@@ -185,6 +198,7 @@ def get_raw_data(player_name: str, game_count: int, api_auth_key: str) -> pd.Dat
     return resultant_frame
 
 def ingest_data(player_name: str, game_count: int, api_auth_key: str) -> pd.DataFrame:
+    """ Call get raw data, verify the data returned, and return the parsed DataFrame. """
     initiate_logger()
     
     raw_frame: pd.DataFrame = get_raw_data(player_name, game_count, api_auth_key)

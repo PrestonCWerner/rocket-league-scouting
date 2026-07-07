@@ -6,19 +6,16 @@ import altair as alt
 from pathlib import Path
 
 @st.cache_data
-def load_data(csv_to_report: str) -> pd.DataFrame:
-   # Caches raw csv data for further use
-   return pd.read_csv(csv_to_report)
+def show_core_data(raw_data: pd.DataFrame) -> None:
+    """ Generates table form for general statistics. """
 
-@st.cache_data
-def show_data(raw_data: pd.DataFrame) -> None:
-    # Generates tabular data from raw_data source
     with st.container():
         st.subheader("Game Data Overview", text_alignment = "center")
         st.dataframe(raw_data)
 
 @st.cache_data
 def show_positioning_data(raw_data: pd.DataFrame) -> None:
+    """ Generates container for displaying positioning data. Additionally transforms the raw DataFrame into and aggregated DataFrame. """
     with st.container():
 
         adtb_col, adtbp_col, adtbnp_col, adtm_col = st.columns(4)
@@ -69,8 +66,8 @@ def show_positioning_data(raw_data: pd.DataFrame) -> None:
         apffb_col.metric(label = "**AVERAGE % OF TIME FARTHEST FROM BALL**", value = avg_df.iloc[0]["avg_pct_farthest_from_ball"]/100, format = "percent", border = True)
 
 @st.cache_data
-def show_metrics(raw_data: pd.DataFrame) -> None:
-    # Generate metrics data for core statistics
+def show_core_metrics(raw_data: pd.DataFrame) -> None:
+    """ Generates container for displaying core data. Additionally transforms the raw DataFrame into and aggregated DataFrame. """
 
     with st.container():
         st.subheader("Core Statistics", text_alignment = "center")
@@ -131,7 +128,7 @@ def show_metrics(raw_data: pd.DataFrame) -> None:
 
 @st.cache_data
 def show_boost_data(raw_data: pd.DataFrame) -> None:
-    # Generates boost data page, which shows key stats related to boost management and usage
+    """ Generates boost data report, transforming the raw_data DataFrame into an aggregated DataFrame """
 
     # This query averages a variety of boost stats
     boost_query = """
@@ -180,7 +177,7 @@ def show_boost_data(raw_data: pd.DataFrame) -> None:
 
 @st.cache_data
 def show_movement_data(raw_data: pd.DataFrame) -> None:
-    # Generates movement data metric cards
+    """ Generates boost data report, transforming the raw_data DataFrame into an aggregated DataFrame. """
 
     # This query averages key movement stats
     movement_query = """
@@ -219,7 +216,7 @@ def show_movement_data(raw_data: pd.DataFrame) -> None:
 
 @st.cache_data
 def show_win_loss(raw_data: pd.DataFrame) -> None:
-    # Generates win-loss stacked bar chart, showing win-loss per day
+    """ Generates win-loss graph on Core tab. """
 
     win_loss_query = "SELECT CAST(datetime AS DATETIME) AS date, match_result, COUNT(*) AS game_count FROM raw_data GROUP BY datetime, match_result ORDER BY datetime ASC"
     win_loss_df = duckdb.sql(win_loss_query).df()
@@ -242,8 +239,9 @@ def show_win_loss(raw_data: pd.DataFrame) -> None:
         # 4. Render in Streamlit
         st.altair_chart(chart, use_container_width=True)
 
-# Filter database based off of number of games, game type, and car type
 def filter_df() -> pd.DataFrame:
+    """ Creates container for multiple filters and applies those filters to the current selected DataFrame. """
+
     with st.container():
             subhead_col = st.columns(1)[0]
             game_type_col, car_type_col, playlist_col, game_count_col = st.columns(4)
@@ -319,7 +317,8 @@ def filter_df() -> pd.DataFrame:
     return filtered_df
 
 if __name__ == "__main__":
-    # If 'player_csvs/' is empty, return error message
+    """ Generates page for data reporting. """
+    
     if len(st.session_state["df_manifest"]) == 0:
         print(st.session_state["df_manifest"])
         st.title(":red[No DataFrames are currently in the manifest. Please pull data from the 'pull data' page to populate this page.]")
@@ -350,10 +349,10 @@ if __name__ == "__main__":
                     metrics, data_overview, win_loss = st.columns(3)
 
                     with metrics:
-                        show_metrics(filtered_df)
+                        show_core_metrics(filtered_df)
                     
                     with data_overview:
-                        show_data(filtered_df)
+                        show_core_data(filtered_df)
 
                     with win_loss:
                         show_win_loss(filtered_df)
